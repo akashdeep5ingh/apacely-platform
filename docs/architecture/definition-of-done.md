@@ -6,13 +6,13 @@ Apacely is a shared multi-tenant managed lead-conversion platform for residentia
 
 This phase creates architecture documentation only. It does not claim the platform is implemented, integrations are connected, or operational checks have passed. Cloudflare is the future orchestration/backend layer; no Cloudflare resources or deployments are authorized now.
 
-## Current architecture-phase acceptance
+## Current V1 documentation-phase acceptance
 
-- Only system-overview.md, multi-tenant-design.md, security-boundaries.md, and definition-of-done.md under docs/architecture/ are added; existing README.md is unchanged.
-- Read all four documents back from the remote commit and confirm the approved principles, shared/config distinction, and unresolved decisions are present.
-- Compare the before/after commits: the changed-file set is exactly the four requested additions, with no implementation files or deployment configuration.
-- Confirm the change is documentation-only and no deployment, Cloudflare mutation, or provider connection action was performed. An independent account-wide infrastructure audit is not implied by a GitHub diff.
-- No SMS, voice, or final LLM provider is selected. Jev's exact judgment points remain open until approved.
+- Update the four existing architecture documents and add only event-model.md and provider-adapters.md under docs/architecture/; README.md remains unchanged.
+- Read all six documents back from the committed revision; confirm approved V1 decisions replace superseded open questions and remaining decisions are explicit.
+- Compare before/after commits: only these six architecture Markdown documents change, with four modifications and two additions. No implementation or deployment configuration is added.
+- No deployment, Cloudflare mutation, secret change, or provider connection action is performed. A GitHub diff is not an independent account-wide infrastructure audit.
+- Workers, D1, Queues, Workflows, opaque generated tenant IDs, event-driven normalization, and the three environments are approved. R2 is deferred; final providers remain unselected.
 
 ## Shared verification versus tenant-specific evidence
 
@@ -28,6 +28,10 @@ The exact latency/availability targets and provider choices are unresolved; they
 | --- | --- | --- |
 | Test lead ingestion | One authorized synthetic event creates or resolves the expected tenant-scoped lead/state; malformed or spoofed events are rejected | Tenant ID, fixture/event ID, resulting record, rejection results |
 | Tenant isolation | Zero unauthorized disclosures or mutations across at least two synthetic tenant contexts, including colliding external/contact IDs | Negative tests for reads, writes, joins, caches, jobs, callbacks, exports, dashboards, and model context |
+| Environment isolation | Development/staging/production data, bindings, jobs, and integration mappings do not cross environment boundaries | Positive/negative API, queue, workflow, and configuration tests |
+| Generated tenant identity | Tenant #001 and synthetic peers use the same opaque ID mechanism; business names are not IDs | Fixture creation and invalid/colliding ID tests |
+| Event normalization | Core logic receives validated shared events, not vendor payloads; duplicate and out-of-order events are safe | Adapter fixtures, schema/version rejection, replay and ordering tests |
+| Durable/asynchronous processing | Queues and Workflows preserve tenant/environment context through retries and waits without duplicate effects | Failure/replay/resume tests and persisted workflow references |
 | Configuration isolation | Each context loads only its own validated configuration; invalid/missing context fails closed | Config versions and authorized/denied results |
 | Deterministic orchestration | Approved transitions occur once; invalid transitions are denied; replay/retry does not duplicate external effects | State/event traces and duplicate-event results |
 | SMS send and reply, if in scope | Authorized test message has provider-confirmed delivery; inbound reply maps to the same tenant/conversation | Redacted delivery receipt and inbound-event/record linkage |
@@ -46,10 +50,10 @@ No excluded integration may silently be called PASS. Mark it NOT RUN or N/A with
 ## Tenant #001 rollout sequence
 
 1. Use Apacely as logical Tenant #001 with synthetic data and mocks before any paying client deployment. A second synthetic test context proves isolation; it is not a client activation.
-2. Approve outstanding architecture decisions and a measurable test scope before implementation and resource creation.
+2. Specify the first-slice scope and remaining blocking implementation decisions. Use the approved Workers/D1/Queues/Workflows architecture and opaque tenant IDs. Implementation and resource creation still require separate authorization; this phase authorizes neither.
 3. Run shared logic and isolation tests without live external effects.
 4. Only after separate integration authorization, connect selected providers and run approved recipient/calendar/CRM tests. No providers are connected by this document.
-5. Capture all applicable matrix evidence for Tenant #001, including failure cases and safe rollback.
+5. Tenant #001 must reach staging and pass all applicable Definition of Done checks, including failure cases, environment isolation, and safe rollback. Development success alone is insufficient. Providers outside the approved slice are N/A, never falsely PASS.
 6. Obtain explicit human production-activation approval. A passing test suite does not activate production automatically.
 7. For every paying tenant, validate configuration and rerun tenant-specific checks plus relevant shared/isolation checks before seeking activation approval.
 
@@ -65,6 +69,15 @@ If a check fails: identify the cause, fix the process, rerun the check and affec
 
 - What exact functional scope, SLOs, performance limits, recovery targets, and failure scenarios apply to the first release?
 - Which SMS, voice, CRM/calendar, and replaceable LLM adapters must pass which capability tests?
-- What are Jev's approved judgment fixtures, thresholds, structured output rules, and escalation criteria?
+- What fixtures, triggers, thresholds, outputs, and escalation criteria implement Jev's approved genuine-intent, qualification-sufficiency, handoff-readiness, and ambiguous-next-action categories?
 - Who approves integration tests and production activation, and where is redacted evidence stored?
 - What legal/operational consent rules, large-scale thresholds, approval expiry, and rollback criteria are required?
+
+## Decisions that block first-slice implementation
+
+- Define the end-to-end first-slice behavior and scope: entry point, qualification fields, terminal outcome, which actions/Jev categories are exercised, mock-only versus later live tests, and explicit acceptance fixtures. No first-slice scope is assumed here.
+- Specify the minimum authorized tenant/user or source binding, D1 topology/schema/tenant constraints, and opaque-ID generation algorithm. A tenant ID supplied by a caller alone is not authorization.
+- Finalize the versioned event/action contracts and state transitions needed by that scope, including durable dispatch atomicity, concurrency/ordering, idempotency, and bounded retry ownership across Queues/Workflows.
+- If Jev is in the slice, specify its runtime/LLM-boundary relationship, triggers, structured results, sufficiency/handoff criteria, and safe fallback. Otherwise explicitly defer it from the initial test scope.
+
+These block a reliable end-to-end implementation, not preparatory local exploration. Final vendors, R2, live secret provisioning, and production activation are not blockers for a mock-only development slice. They become requirements only when the relevant live/staging/production scope is authorized. Implementation, resource creation, and deployment remain unauthorized in this documentation phase.

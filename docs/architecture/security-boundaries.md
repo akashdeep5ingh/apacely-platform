@@ -17,7 +17,13 @@ This is a documentation-only security foundation, not an implemented control set
 | Backend to logs/dashboards/exports | Redact secrets and unnecessary personal data; authorize tenant-specific views; avoid cross-tenant aggregation leakage |
 | Human/operator to production controls | Require explicit scoped approval, least privilege, and an auditable change/test record |
 
-Cloudflare is the orchestration/backend layer. Runtime services, storage, identity provider, and exact enforcement mechanisms remain open. Approval of architecture principles does not authorize changes to DNS, authentication, security policies, or infrastructure.
+Approved V1 uses Workers for API/orchestration, D1 for application state and non-secret references, Queues for asynchronous work/retries/events, and Workflows for durable multi-step processes. R2 is not required for the first slice. Identity provider, secret storage, and exact enforcement mechanisms remain open. Approval of architecture principles does not authorize changes to DNS, authentication, security policies, or infrastructure.
+
+## V1 asynchronous and environment boundaries
+
+Tenant isolation is mandatory at every data-access and asynchronous-processing boundary, including Queues consumers, retries/replays, Workflows creation and resumed steps, and D1 relationship lookups. Preserve validated tenant/environment context and recheck authority before side effects. Normalize authenticated inbound vendor events before shared business rules; normalization does not grant authority. Provider-independent actions remain subject to deterministic policy and approval gates.
+
+Initial environments are development, staging, and production. Require environment-scoped bindings, data, credentials, and access; prohibit unintended cross-environment effects. Tenant #001 uses an opaque generated ID through the same mechanism as future clients. It must reach staging and pass Definition of Done before production activation is considered. This is a requirement, not a change to any live security policy.
 
 ## Shared controls versus tenant configuration
 
@@ -36,7 +42,7 @@ Provider-specific security mechanisms belong in adapters behind reusable contrac
 
 ## Deterministic authority and Jev
 
-Jev is used only at explicitly defined judgment points; its exact runtime, points, and thresholds remain unresolved. Routine validation, routing, retries, tenant authorization, consent checks, and approval gates are deterministic shared logic, not model decisions.
+Jev is reserved for genuine intent, qualification sufficiency, handoff readiness, and ambiguous next-action judgment. Exact triggers, runtime, thresholds, and fallback rules remain unresolved. Routine validation, routing, retries, tenant authorization, consent checks, and approval gates are deterministic shared logic, not model decisions.
 
 Treat lead messages, transcripts, retrieved content, and model output as untrusted data. They cannot grant access, change tenant identity, reveal secrets, or authorize tools. Validate structured outputs and allowed transitions; uncertain or unsafe judgments fall back to a defined safe path or human escalation. Any model memory/retrieval is tenant-scoped. No autonomous model-driven production activation is allowed.
 
