@@ -1,4 +1,5 @@
-import {createHash, randomUUID} from 'node:crypto';
+import {sha256} from '@noble/hashes/sha256';
+import {bytesToHex} from '@noble/hashes/utils';
 export class SliceError extends Error { constructor(public code: 'validation'|'context'|'conflict'|'retry_exhausted', message:string) { super(message); this.name='SliceError'; } }
 export const POLICY='mock-qualification-v1';
 export const fields=['intent','timeline','financing_status','location','property_type'] as const;
@@ -8,7 +9,7 @@ export interface Input {schema_version:1;source_event_id:string;source_lead_id:s
 export interface Context {environment:'development';source_binding:string;operation:'ingest_mock_lead'}
 export interface Scope {tenant_id:string;environment:'development'}
 export const uuidV4=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-export const defaultId=()=>randomUUID();
+export const defaultId=()=>globalThis.crypto.randomUUID();
 const enums:Partial<Record<Field,readonly string[]>>={intent:['buy','rent','sell','unknown'],timeline:['0_3_months','3_6_months','over_6_months','unknown'],financing_status:['preapproved','cash','not_started','unknown'],property_type:['condo','house','townhouse','commercial','unknown']};
 function fail(message:string):never {throw new SliceError('validation',message);}
 function object(value:unknown):Record<string,unknown> {if (!value||typeof value!=='object'||Array.isArray(value)) return fail('Expected object'); return value as Record<string,unknown>;}
@@ -36,4 +37,4 @@ export function validateInput(raw:unknown):Input {
 }
 /** SHA-256 of UTF-8 JSON array, fixed top-level and qualification field order.
  * Qualification uses [field,value] entries only when supplied (null != omitted). */
-export function fingerprint(x:Input):string {return createHash('sha256').update(JSON.stringify([x.schema_version,x.source_lead_id,x.source_sequence,x.occurred_at,x.channel,x.contact_reference,x.text,fields.filter(f=>Object.hasOwn(x.qualification,f)).map(f=>[f,x.qualification[f]]),x.handoff_requested]),'utf8').digest('hex');}
+export function fingerprint(x:Input):string {return bytesToHex(sha256(new TextEncoder().encode(JSON.stringify([x.schema_version,x.source_lead_id,x.source_sequence,x.occurred_at,x.channel,x.contact_reference,x.text,fields.filter(f=>Object.hasOwn(x.qualification,f)).map(f=>[f,x.qualification[f]]),x.handoff_requested]))));}

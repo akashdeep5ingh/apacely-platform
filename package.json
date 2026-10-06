@@ -12,11 +12,13 @@
     "test:d1": "tsx --test --import ./tests/d1/loopback-guard.mjs tests/d1/*.test.ts"
   },
   "dependencies": {
+    "@noble/hashes": "1.8.0",
     "better-sqlite3": "^11.10.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.19.0",
+    "esbuild": "0.28.1",
     "miniflare": "^3.20250718.3",
     "tsx": "^4.20.0",
     "typescript": "^5.8.0"

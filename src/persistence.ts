@@ -9,9 +9,11 @@ export interface AcceptanceStore {
  update(table:Table,id:string,patch:Row):number;
  compareLead(id:string,version:number,sequence:number,patch:Row):void;
 }
+/** Trusted exact identity supplied by Processor, not a general history query. */
+export interface AcceptanceTarget {source_binding:string;source_event_id:string;source_lead_id:string}
 export interface AcceptanceRepository {
  id():string;
  now():string;
  assertScope(scope:Scope):void|Promise<void>;
- accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T):T|Promise<T>;
+ accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T,target?:AcceptanceTarget):T|Promise<T>;
 }

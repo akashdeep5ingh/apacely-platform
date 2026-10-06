@@ -15,6 +15,192 @@ const mf=new Miniflare({modules:true,script:'export default {fetch(){return new 
 after(()=>mf.dispose());
 const time='2026-01-01T12:00:01.000Z';
 const ctx={environment:'development',source_binding:'mock-source-001',operation:'ingest_mock_lead'} as const;
+test('D1 processor reads a bounded identity snapshot independent of tenant history',async()=>{
+ const h=await harness();
+ for(let i=0;i<12;i++)await h.processor.process(ctx,{...fixture,source_event_id:`history-${i}`,source_lead_id:`history-${i}`});
+ const sizes:number[][]=[];
+ h.setHook(async statements=>{
+  if(statements.length===7){const results=await h.db.batch(statements as Parameters<typeof h.db.batch>[0]);sizes.push(results.map((r:{results:unknown[]})=>r.results.length));}
+ });
+ await h.processor.process(ctx,fixture);
+ await h.processor.process(ctx,{...fixture,source_event_id:'next',source_sequence:2,qualification:{location:null}});
+ await h.processor.process(ctx,fixture);
+ assert.equal(sizes.length,3);
+ assert.ok(sizes.every(s=>s.every(n=>n<=1)),JSON.stringify(sizes));
+ assert.deepEqual(sizes[0],[1,0,0,0,0,0,0]);
+ assert.deepEqual(sizes[1],[1,1,1,0,0,1,0]);
+ assert.deepEqual(sizes[2],[1,1,1,1,0,1,0]);
+});
+
+test('D1 diagnostic rows reject revocation at their coherent read boundary',async()=>{
+ const h=await harness();await h.processor.process(ctx,fixture);let revoked=false;
+ const revoke=async()=>{if(!revoked){revoked=true;await h.db.prepare("UPDATE tenants SET lifecycle_status='inactive' WHERE id=?").bind(h.t1.id).run();}};
+ const binding:D1Binding={
+  prepare:sql=>{const wrap=(stmt:D1Statement):D1Statement=>new Proxy(stmt,{get:(target,key)=>key==='bind'?((...values:(string|number|null)[])=>wrap(target.bind(...values))):key==='all'&&sql.startsWith('SELECT *')?async()=>{await revoke();return target.all();}:Reflect.get(target,key,target)});return wrap(h.db.prepare(sql));},
+  batch:async statements=>{await revoke();return h.db.batch(statements as Parameters<typeof h.db.batch>[0]);}
+ };
+ await assert.rejects(new D1Repository(binding,()=>time).rows(h.s1,'events'),{code:'context'});
+});
+
+test('D1 retries documented transient snapshot failures as a complete unit',async()=>{
+ const h=await harness();let reads=0;
+ h.setHook(async statements=>{if(statements.length===7&&++reads===1)throw new Error('D1_ERROR: Network connection lost.');});
+ const outcome=await h.processor.process(ctx,fixture);
+ assert.equal(outcome.qualification.status,'handoff_ready');assert.equal(reads,2);
+ assert.ok((await snapshot(h)).every(rows=>rows.length===1));
+});
+
+test('D1 rejects injected sessions rather than assuming their lifecycle reads are current',async()=>{
+ const h=await harness();
+ for(const bookmark of [null,'stale-bookmark']){
+  const session={prepare:h.db.prepare.bind(h.db),batch:h.db.batch.bind(h.db),getBookmark:()=>bookmark};
+  assert.throws(()=>new D1Repository(session,()=>time),{code:'context'});
+ }
+});
+
+test('D1 lifecycle validation is part of the acceptance batch, never a separate stale read',async()=>{
+ const h=await harness();let standalone=0;
+ const wrap=(stmt:D1Statement):D1Statement=>new Proxy(stmt,{get:(target,key)=>key==='bind'?((...values:(string|number|null)[])=>wrap(target.bind(...values))):key==='all'?async()=>{standalone++;throw new Error('Separate acceptance read forbidden');}:Reflect.get(target,key,target)});
+ const binding:D1Binding={prepare:sql=>wrap(h.db.prepare(sql)),batch:s=>h.db.batch(s as Parameters<typeof h.db.batch>[0])};
+ const result=await new Processor(new D1Repository(binding,()=>time),h.registry).process(ctx,fixture);
+ assert.equal(result.qualification.status,'handoff_ready');assert.equal(standalone,0);
+});
+
+const transientFailures=[
+ 'D1 DB reset because its code was updated.',
+ 'Internal error while starting up D1 DB storage caused object to be reset.',
+ 'Network connection lost.','Replica disconnected from primary.',
+ 'Internal error in D1 DB storage caused object to be reset.',
+ 'Cannot resolve D1 DB due to transient issue on remote node.',
+ "Can't read from request stream because client disconnected."
+];
+test('D1 documented transient details retry both read and write with legacy cause envelopes',async()=>{
+ for(const phase of ['read','write'])for(const [index,message] of transientFailures.entries()){
+  const h=await harness();let failed=false,reads=0,writes=0;
+  h.setHook(async statements=>{
+   const read=statements.length===7;read?reads++:writes++;
+   if(!failed&&read===(phase==='read')){failed=true;throw index%2?new Error('D1_ERROR',{cause:new Error(message)}):new Error(`D1_ERROR: ${message}`);}
+  });
+  await h.processor.process(ctx,fixture);assert.equal(reads,2);assert.equal(writes,phase==='write'?2:1);
+  h.setHook(undefined);assert.ok((await snapshot(h)).every(r=>r.length===1));
+ }
+});
+test('D1 transient failures exhaust configured bounded retry budgets without writes',async()=>{
+ for(const phase of ['read','write'])for(const maxRetries of [0,1,3]){
+  const h=await harness();let failures=0;
+  h.setHook(async statements=>{if((statements.length===7)===(phase==='read')){failures++;throw new Error('D1_ERROR: Replica disconnected from primary.');}});
+  await assert.rejects(new Processor(h.repo,h.registry,{maxRetries}).process(ctx,fixture),{code:'retry_exhausted'});
+  assert.equal(failures,maxRetries+1);h.setHook(undefined);assert.ok((await snapshot(h)).every(r=>r.length===0));
+ }
+});
+test('D1 quota resource syntax type FK and unknown failures never retry',async()=>{
+ const permanent=[
+  "Your account has exceeded D1's free tier daily row read limit.",
+  'Exceeded maximum DB size.',"D1 DB's isolate exceeded its memory limit and was reset.",
+  'D1 DB exceeded its CPU time limit and was reset.','near SELECT: syntax error',
+  'FOREIGN KEY constraint failed','D1_TYPE_ERROR: unsupported type','unrecognized error',
+  'Network connection lost. with unknown extra details'
+ ];
+ for(const phase of ['read','write'])for(const detail of permanent){
+  const h=await harness();let failures=0;const failure=new Error(`D1_ERROR: ${detail}`);
+  h.setHook(async statements=>{if((statements.length===7)===(phase==='read')){failures++;throw failure;}});
+  await assert.rejects(h.processor.process(ctx,fixture),e=>e===failure);assert.equal(failures,1);
+  h.setHook(undefined);assert.ok((await snapshot(h)).every(r=>r.length===0));
+ }
+});
+for(const detail of ['FOREIGN KEY constraint failed','unrecognized error','cycle'])test(`D1 incomplete cause chains fail closed with deep ${detail}`,async()=>{
+ for(const phase of ['read','write']){
+  const h=await harness();let failures=0;
+  const tail=new Error('Network connection lost.');
+  const failure=new Error('D1_ERROR',{cause:new Error('Network connection lost.',{cause:new Error('Network connection lost.',{cause:tail})})});
+  tail.cause=detail==='cycle'?failure:new Error(detail);
+  h.setHook(async statements=>{if((statements.length===7)===(phase==='read')){failures++;throw failure;}});
+  await assert.rejects(h.processor.process(ctx,fixture),e=>e===failure);assert.equal(failures,1);
+  h.setHook(undefined);assert.ok((await snapshot(h)).every(r=>r.length===0));
+ }
+});
+test('D1 ambiguous successful commit is reconciled by replay, never a second action',async()=>{
+ const h=await harness();let writes=0,reads=0;
+ h.setHook(async statements=>{
+  if(statements.length===7){reads++;return;}
+  writes++;await h.db.batch(statements as Parameters<typeof h.db.batch>[0]);
+  throw new Error('D1_ERROR: Network connection lost.');
+ });
+ const first=await h.processor.process(ctx,fixture);assert.equal(writes,1);assert.equal(reads,2);
+ h.setHook(undefined);const allocated=h.ids.length;
+ assert.deepEqual(await h.processor.process(ctx,fixture),first);assert.equal(h.ids.length,allocated);
+ assert.ok((await snapshot(h)).every(r=>r.length===1));
+});
+test('D1 final-attempt response loss reports exhaustion with a durable outcome for explicit replay',async()=>{
+ const h=await harness();let reads=0,writes=0;
+ const failure=new Error('D1_ERROR: Network connection lost.');
+ h.setHook(async statements=>{
+  if(statements.length===7){reads++;return;}
+  writes++;await h.db.batch(statements as Parameters<typeof h.db.batch>[0]);throw failure;
+ });
+ await assert.rejects(new Processor(h.repo,h.registry,{maxRetries:0}).process(ctx,fixture),error=>{
+  assert.equal((error as {code?:string}).code,'retry_exhausted');
+  const cause=(error as Error).cause as Error&{code:string};
+  assert.equal(cause?.code,'D1_TRANSIENT');assert.equal(cause.cause,failure);return true;
+ });
+ assert.equal(reads,1);assert.equal(writes,1);h.setHook(undefined);
+ const before=await snapshot(h),allocated=h.ids.length;
+ assert.ok(before.every(rows=>rows.length===1));assert.equal(before[5][0].status,'pending');
+ const committed=JSON.parse(String(before[2][0].outcome_snapshot));
+ assert.deepEqual(await h.processor.process(ctx,fixture),committed);assert.equal(h.ids.length,allocated);
+ assert.deepEqual(await snapshot(h),before);
+ assert.deepEqual((await h.db.prepare('PRAGMA foreign_key_check').all()).results,[]);
+ assert.equal((await h.db.prepare('SELECT count(*) AS n FROM acceptance_assertions').all()).results[0].n,0);
+});
+test('D1 acceptance diagnostics and retries stay on the original primary binding',async()=>{
+ const h=await harness();let sessions=0,reads=0;
+ const primary={prepare:h.db.prepare.bind(h.db),batch:async(s:D1Statement[])=>{if(s.length===7&&++reads===1)throw new Error('D1_ERROR: Network connection lost.');return h.db.batch(s as Parameters<typeof h.db.batch>[0]);},withSession:()=>{sessions++;throw new Error('No session, even first-primary, may be reused for lifecycle reads');}};
+ const repo=new D1Repository(primary,()=>time),p=new Processor(repo,h.registry);
+ await p.process(ctx,fixture);assert.equal(reads,2);assert.equal((await repo.rows(h.s1,'events')).length,1);assert.equal(sessions,0);
+ await h.db.prepare("UPDATE tenants SET lifecycle_status='inactive' WHERE id=?").bind(h.t1.id).run();
+ await assert.rejects(p.process(ctx,fixture),{code:'context'});await assert.rejects(repo.rows(h.s1,'events'),{code:'context'});
+ assert.equal(sessions,0);
+});
+test('D1 concurrent changed fingerprints conflict across same and different lead queues',async()=>{
+ for(const updating of [false,true])for(const differentLead of [false,true]){
+  const h=await harness();if(updating)await h.processor.process(ctx,fixture);
+  const input=updating?{...fixture,source_event_id:'second',source_sequence:2}:fixture;
+  const winner=new Processor(new D1Repository(h.db,()=>time),h.registry);let calls=0;
+  h.setHook(async statements=>{if(statements.length!==7&&++calls===1)await winner.process(ctx,input);});
+  const changed=differentLead?{...input,source_lead_id:'different',source_sequence:1}:{...input,text:'changed'};
+  await assert.rejects(h.processor.process(ctx,changed),{code:'conflict'});assert.equal(calls,1);
+  h.setHook(undefined);const rows=await snapshot(h);
+  assert.deepEqual(rows.map(r=>r.length),[1,1,updating?2:1,updating?2:1,1,updating?2:1]);
+  assert.equal(rows[0][0].source_lead_id,fixture.source_lead_id);assert.equal(rows[0][0].version,updating?2:1);
+  assert.deepEqual(await h.processor.process(ctx,input),await winner.process(ctx,input));
+ }
+});
+
+test('D1 trusted maintenance callbacks fail closed above their bounded snapshot budget',async()=>{
+ const h=await harness();
+ await h.db.batch(Array.from({length:101},(_,i)=>h.db.prepare('INSERT INTO leads (id,tenant_id,source_binding,source_lead_id,contact_reference,last_source_sequence,version,created_at,updated_at) VALUES (?,?,?,?,?,0,0,?,?)').bind(randomUUID(),h.t1.id,ctx.source_binding,`history-${i}`,'synthetic',time,time)));
+ let planned=false;
+ await assert.rejects(h.repo.accept(h.s1,()=>{planned=true;}),{code:'context'});
+ assert.equal(planned,false);
+ // A large tenant must still work through the exact processor contract, not fallback.
+ await h.processor.process(ctx,fixture);
+});
+
+test('D1 conflicting permanent and transient cause details fail closed',async()=>{
+ const h=await harness();let failures=0;
+ const error=new Error('D1_ERROR: FOREIGN KEY constraint failed',{cause:new Error('Network connection lost.')});
+ h.setHook(async()=>{failures++;throw error;});
+ await assert.rejects(h.processor.process(ctx,fixture),e=>e===error);
+ assert.equal(failures,1);
+});
+
+test('D1 planning exceptions are not reclassified as database transient failures',async()=>{
+ const h=await harness();let calls=0;const error=new Error('D1_ERROR: Network connection lost.');
+ const p=new Processor(h.repo,h.registry,{checkpoint:()=>{calls++;throw error;}});
+ await assert.rejects(p.process(ctx,fixture),e=>e===error);assert.equal(calls,1);
+ assert.ok((await snapshot(h)).every(r=>r.length===0));
+});
+
 test('D1 accepts the fixture atomically through the shared processor',async()=>{
  const db=await mf.getD1Database('DB');
  await db.exec(readFileSync(new URL('../../src/schema.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replaceAll('\n',' '));
@@ -34,7 +220,7 @@ async function harness() {
  const db=await mf.getD1Database('DB');
  await db.exec(readFileSync(new URL('../../src/schema.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replaceAll('\n',' '));
  let hook:undefined|((statements:D1Statement[])=>Promise<void>),batches=0;
- const binding:D1Binding={prepare:sql=>db.prepare(sql),batch:async statements=>{batches++;await hook?.(statements);return db.batch(statements as Parameters<typeof db.batch>[0]);}};
+ const binding:D1Binding={prepare:sql=>db.prepare(sql),batch:async statements=>{if(statements.length!==2){batches++;await hook?.(statements);}return db.batch(statements as Parameters<typeof db.batch>[0]);}};
  const ids:string[]=[];
  const repo=new D1Repository(binding,()=>time,()=>{const id=randomUUID();ids.push(id);return id;});
  const t1=await repo.createTenant('Apacely'),t2=await repo.createTenant('Synthetic Tenant');

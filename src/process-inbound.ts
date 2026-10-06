@@ -24,15 +24,14 @@ export class Processor {
  }
  async process(ctx:Context,raw:unknown):Promise<Outcome> {
   const input=validateInput(raw),scope=Object.freeze(this.registry.resolve(ctx)),source=ctx.source_binding;
-  await this.repo.assertScope(scope);
   const key=JSON.stringify([scope.tenant_id,source,input.source_lead_id]);
   const work=(this.queues.get(key)??Promise.resolve()).catch(()=>undefined).then(async()=>{
    for(let retries=0;;retries++) {
-    try {return await this.repo.accept(scope,store=>accept(this.repo,store,scope,source,input,this.options));}
+    try {return await this.repo.accept(scope,store=>accept(this.repo,store,scope,source,input,this.options),{source_binding:source,source_event_id:input.source_event_id,source_lead_id:input.source_lead_id});}
     catch(error) {
      const code=(error as {code?:string})?.code;
-     if(!['SQLITE_BUSY','SQLITE_BUSY_SNAPSHOT','SQLITE_LOCKED','LOCAL_VERSION_CONFLICT'].includes(code??'')) throw error;
-     if(retries===this.maxRetries) throw new SliceError('retry_exhausted','Local lock/version retry budget exhausted');
+     if(!['SQLITE_BUSY','SQLITE_BUSY_SNAPSHOT','SQLITE_LOCKED','LOCAL_VERSION_CONFLICT','D1_TRANSIENT'].includes(code??'')) throw error;
+     if(retries===this.maxRetries) throw Object.assign(new SliceError('retry_exhausted','Acceptance retry budget exhausted'),{cause:error});
      await new Promise(resolve=>setTimeout(resolve,1));
     }
    }
