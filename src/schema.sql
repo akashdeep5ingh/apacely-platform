@@ -1,4 +1,10 @@
 PRAGMA foreign_keys = ON;
+-- Batch-local assertions: inserted/deleted in the same atomic D1 batch.
+-- Named CHECK failures abort the whole batch (zero-row CAS is not success).
+CREATE TABLE IF NOT EXISTS acceptance_assertions (
+ active INTEGER CONSTRAINT apacely_active_scope CHECK(active=1),
+ cas INTEGER CONSTRAINT apacely_cas_conflict CHECK(cas=1)
+);
 CREATE TABLE IF NOT EXISTS tenants (
  id TEXT PRIMARY KEY, display_name TEXT NOT NULL, lifecycle_status TEXT NOT NULL CHECK(lifecycle_status IN ('active','inactive')), created_at TEXT NOT NULL
 );

@@ -1,9 +1,8 @@
 import Database from 'better-sqlite3';
 import {readFileSync} from 'node:fs';
 import {defaultId,SliceError,utc,uuidV4,type Scope} from './contracts.js';
-export const businessTables=['leads','conversations','events','messages','qualification_state','action_outbox'] as const;
-export type Table=typeof businessTables[number];
-export type Row=Record<string,string|number|null>;
+import {businessTables,type Table,type Row,type AcceptanceStore} from './persistence.js';
+export {businessTables,type Table,type Row} from './persistence.js';
 export interface UnitOfWork {transaction<T>(work:()=>T):T}
 /** Local interactive SQLite adapter only; a future D1 adapter must supply its own atomic unit. */
 export class Repository implements UnitOfWork {
@@ -20,6 +19,7 @@ export class Repository implements UnitOfWork {
   if(!scope||scope.environment!=='development'||!uuidV4.test(scope.tenant_id)||!this.db.prepare("SELECT id FROM tenants WHERE id=? AND lifecycle_status='active'").get(scope.tenant_id)) throw new SliceError('context','Active trusted development tenant scope required');
  }
  scoped(scope:Scope):ScopedRepository {this.assertScope(scope);const captured=Object.freeze({...scope});return new ScopedRepository(this.db,captured,()=>this.assertScope(captured));}
+ accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T):T {return this.transaction(()=>work(this.scoped(scope)));}
  transaction<T>(work:()=>T):T {return this.db.transaction(work).immediate();}
  requireCommitted():void {if(this.db.inTransaction) throw new SliceError('conflict','Outbox consumer requires committed state');}
  close():void {this.db.close();}
