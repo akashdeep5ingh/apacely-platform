@@ -9,19 +9,22 @@ async function run(code:string){
  import {WorkerEntrypoint} from 'cloudflare:workers';
  import {Ingress} from './src/worker-ingress.ts';
  import {D1Repository} from './src/d1-repository.ts';
+ import {D1SourceMappingStore} from './src/source-mappings.ts';
  import {fixture} from './src/fixture.ts';
  export default class extends WorkerEntrypoint {async verify(){
  const check=(x,m)=>{if(!x)throw new Error(m)};
  const now='2026-01-01T12:00:01.000Z',repo=new D1Repository(this.env.DB,()=>now);
  const t1=await repo.createTenant('Synthetic one'),t2=await repo.createTenant('Synthetic two');
  const logs=[],nonces=new Map();let calls=0;
+ const store=new D1SourceMappingStore(this.env.DB,()=>now);
+ const initial=await store.create({principal:'actor-one',provider:'synthetic',source:'source-one',tenant_id:t1.id,source_binding:'mock-source-001',environment:'development',operation:'ingest_mock_lead'});
  const dependencies={repo,now:()=>now,log:x=>logs.push(x),
  verifier:{verify:async x=>({principal:'actor-one',provider:x.provider,source:'source-one',signed_at:now,nonce:'nonce-one',body_digest:x.body_digest,method:x.method,path:x.path})},
- mappings:async()=>[{principal:'actor-one',provider:'synthetic',source:'source-one',tenant_id:t1.id,source_binding:'mock-source-001',environment:'development',operation:'ingest_mock_lead'}],
+ mappings:{resolve:async()=>[{...initial}],authorityBinding:()=>this.env.DB},
  replay:{bind:async(key,digest)=>{const old=nonces.get(key);if(old&&old!==digest)return false;nonces.set(key,digest);return true;}}};
  const ingress=new Ingress(dependencies);
  const request=(body=JSON.stringify(fixture),headers={},method='POST',path='/v1/ingress/synthetic')=>new Request('https://local.invalid'+path,{method,headers:{'content-type':'application/json',...headers},body:method==='GET'?undefined:body});
- const send=async(...args)=>{const response=await ingress.handle(request(...args));return {status:response.status,body:await response.json()};};
+ const send=async(...args)=>{const response=await new Ingress(dependencies).handle(request(...args));return {status:response.status,body:await response.json()};};
  ${code}
  return true;
  }} `},bundle:true,write:false,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:workers'],metafile:true});
@@ -41,15 +44,15 @@ test('permanent persistence fails safely without retry and identical nonce recov
 `));
 
 test('trusted authority is captured across awaits and overlapping IDs remain isolated',()=>run(`
- const mapping=(await dependencies.mappings())[0],assertScope=repo.assertScope.bind(repo);
- dependencies.mappings=async()=>[mapping];
+ const mapping=(await dependencies.mappings.resolve())[0],assertScope=repo.assertScope.bind(repo);
+ dependencies.mappings.resolve=async()=>[mapping];
  repo.assertScope=async scope=>{await assertScope(scope);mapping.tenant_id=t2.id;};
  check((await send()).status===200,'accept captured mapping');
  check((await repo.rows({tenant_id:t1.id,environment:'development'},'events')).length===1,'mapping mutation switched tenant');
  check((await repo.rows({tenant_id:t2.id,environment:'development'},'events')).length===0,'foreign write');
  repo.assertScope=assertScope;
  dependencies.verifier.verify=async x=>({principal:'actor-two',provider:x.provider,source:'source-two',signed_at:now,nonce:'nonce-one',body_digest:x.body_digest,method:x.method,path:x.path});
- dependencies.mappings=async()=>[{...mapping,principal:'actor-two',source:'source-two',source_binding:'mock-source-002',tenant_id:t2.id}];
+ const second=await store.create({principal:'actor-two',provider:'synthetic',source:'source-two',source_binding:'mock-source-002',tenant_id:t2.id,environment:'development',operation:'ingest_mock_lead'});dependencies.mappings.resolve=async()=>[second];
  check((await send()).status===200,'second authorized tenant');
  const a=await repo.rows({tenant_id:t1.id,environment:'development'},'events'),b=await repo.rows({tenant_id:t2.id,environment:'development'},'events');
  check(a.length===1&&b.length===1&&a[0].id!==b[0].id,'overlapping ids merged');
@@ -72,9 +75,9 @@ test('safe failures log closed fields and exact replay recovers ambiguous commit
  const lost=await send();check(lost.status===503,'ambiguous exhaustion');
  check((await repo.rows({tenant_id:t1.id,environment:'development'},'action_outbox')).length===1,'committed once');
  repo.accept=accept;const recovered=await send();check(recovered.status===200,'recovery blocked by nonce');
- const mapping=dependencies.mappings;
- dependencies.mappings=async()=>{throw new Error('secret body SQL stack injection');};const failed=await send();check(failed.status===500,'unknown internal');
- dependencies.mappings=mapping;
+ const mapping=dependencies.mappings.resolve;
+ dependencies.mappings.resolve=async()=>{throw new Error('secret body SQL stack injection');};const failed=await send();check(failed.status===500,'unknown internal');
+ dependencies.mappings.resolve=mapping;
  check(logs.length===3,'every response logged');
  for(const log of logs){check(Object.keys(log).sort().join(',')==='code,request_id,status','closed log');check(/^[0-9a-f-]{36}$/.test(log.request_id),'generated trace');}
  check(!JSON.stringify([logs,lost,failed]).includes('secret'),'sensitive error leaked');
@@ -92,14 +95,14 @@ test('authenticated replay binds raw bytes and freshness without consuming recov
 `));
 
 test('verified authority requires one exact authorized mapping and active tenant',()=>run(`
- const verify=dependencies.verifier.verify,mapping=(await dependencies.mappings())[0];
+ const verify=dependencies.verifier.verify,mapping=(await dependencies.mappings.resolve())[0];
  dependencies.verifier.verify=async()=>null;check((await send()).status===401,'unverified');
  dependencies.verifier.verify=async x=>({...await verify(x),source:'source-two'});check((await send()).status===403,'cross source');
  dependencies.verifier.verify=verify;
- dependencies.mappings=async()=>[];check((await send()).status===403,'missing mapping');
- dependencies.mappings=async()=>[mapping,mapping];check((await send()).status===403,'ambiguous mapping');
- dependencies.mappings=async()=>[{...mapping,operation:'read'}];check((await send()).status===403,'action authorization');
- dependencies.mappings=async()=>[mapping];
+ dependencies.mappings.resolve=async()=>[];check((await send()).status===403,'missing mapping');
+ dependencies.mappings.resolve=async()=>[mapping,mapping];check((await send()).status===403,'ambiguous mapping');
+ dependencies.mappings.resolve=async()=>[{...mapping,operation:'read'}];check((await send()).status===403,'action authorization');
+ dependencies.mappings.resolve=async()=>[mapping];
  await this.env.DB.prepare('UPDATE tenants SET lifecycle_status=? WHERE id=?').bind('inactive',t1.id).run();check((await send()).status===403,'inactive');
  check((await this.env.DB.prepare('SELECT count(*) n FROM events').first()).n===0,'denied writes');
 `));

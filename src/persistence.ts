@@ -1,3 +1,4 @@
+import type {SourceAuthority} from './source-mappings.js';
 import type {Scope} from './contracts.js';
 export const businessTables=['leads','conversations','events','messages','qualification_state','action_outbox'] as const;
 export type Table=typeof businessTables[number];
@@ -12,8 +13,9 @@ export interface AcceptanceStore {
 /** Trusted exact identity supplied by Processor, not a general history query. */
 export interface AcceptanceTarget {source_binding:string;source_event_id:string;source_lead_id:string}
 export interface AcceptanceRepository {
+ authorityBinding?():object;
  id():string;
  now():string;
  assertScope(scope:Scope):void|Promise<void>;
- accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T,target?:AcceptanceTarget):T|Promise<T>;
+ accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T,target?:AcceptanceTarget,authority?:SourceAuthority):T|Promise<T>;
 }
