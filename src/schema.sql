@@ -27,6 +27,22 @@ CREATE TRIGGER IF NOT EXISTS source_mapping_version BEFORE UPDATE ON source_mapp
  WHEN OLD.status='revoked' OR NEW.id!=OLD.id OR NEW.provider!=OLD.provider OR NEW.source!=OLD.source OR NEW.created_at!=OLD.created_at OR NEW.version!=OLD.version+1 OR NEW.version>9007199254740991
  BEGIN SELECT RAISE(ABORT,'apacely_mapping_version'); END;
 CREATE TABLE IF NOT EXISTS authority_assertions (authorized INTEGER CONSTRAINT apacely_source_authority CHECK(authorized=1));
+CREATE TABLE IF NOT EXISTS replay_assertions (fresh INTEGER CONSTRAINT apacely_replay_fresh CHECK(fresh=1));
+CREATE TABLE IF NOT EXISTS replay_ledger (
+ nonce_ref TEXT PRIMARY KEY CHECK(length(nonce_ref)=64), tenant_id TEXT NOT NULL REFERENCES tenants(id),
+ mapping_id TEXT NOT NULL REFERENCES source_mappings(id), authority_ref TEXT NOT NULL CHECK(length(authority_ref)=64),
+ fingerprint TEXT NOT NULL CHECK(length(fingerprint)=64), signed_at INTEGER NOT NULL, expires_at INTEGER NOT NULL,
+ expired INTEGER NOT NULL DEFAULT 0 CHECK(expired IN (0,1)), deadline INTEGER NOT NULL, CHECK(expires_at=signed_at+300000), CHECK(deadline<=expires_at)
+);
+CREATE TRIGGER IF NOT EXISTS replay_owner BEFORE INSERT ON replay_ledger
+ WHEN NOT EXISTS(SELECT 1 FROM source_mappings WHERE id=NEW.mapping_id AND tenant_id=NEW.tenant_id)
+ BEGIN SELECT RAISE(ABORT,'apacely_replay_owner'); END;
+CREATE INDEX IF NOT EXISTS replay_expiry ON replay_ledger(tenant_id,expired,deadline,nonce_ref);
+CREATE TRIGGER IF NOT EXISTS replay_no_replace BEFORE INSERT ON replay_ledger WHEN EXISTS(SELECT 1 FROM replay_ledger WHERE nonce_ref=NEW.nonce_ref) BEGIN SELECT RAISE(ABORT,'apacely_replay_tombstone'); END;
+CREATE TRIGGER IF NOT EXISTS replay_no_delete BEFORE DELETE ON replay_ledger BEGIN SELECT RAISE(ABORT,'apacely_replay_tombstone'); END;
+CREATE TRIGGER IF NOT EXISTS replay_immutable BEFORE UPDATE ON replay_ledger
+ WHEN OLD.expired=1 OR NEW.expired!=1 OR NEW.nonce_ref!=OLD.nonce_ref OR NEW.tenant_id!=OLD.tenant_id OR NEW.mapping_id!=OLD.mapping_id OR NEW.authority_ref!=OLD.authority_ref OR NEW.fingerprint!=OLD.fingerprint OR NEW.signed_at!=OLD.signed_at OR NEW.expires_at!=OLD.expires_at OR NEW.deadline!=OLD.deadline
+ BEGIN SELECT RAISE(ABORT,'apacely_replay_immutable'); END;
 CREATE TABLE IF NOT EXISTS leads (
  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(id), source_binding TEXT NOT NULL, source_lead_id TEXT NOT NULL, contact_reference TEXT NOT NULL,
  qualification_status TEXT, last_source_sequence INTEGER NOT NULL, version INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,

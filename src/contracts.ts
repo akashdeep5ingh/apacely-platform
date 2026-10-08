@@ -1,6 +1,6 @@
 import {sha256} from '@noble/hashes/sha256';
 import {bytesToHex} from '@noble/hashes/utils';
-export class SliceError extends Error { constructor(public code: 'validation'|'context'|'conflict'|'retry_exhausted', message:string) { super(message); this.name='SliceError'; } }
+export class SliceError extends Error { constructor(public code: 'validation'|'context'|'conflict'|'retry_exhausted'|'expired', message:string) { super(message); this.name='SliceError'; } }
 export const POLICY='mock-qualification-v1';
 export const fields=['intent','timeline','financing_status','location','property_type'] as const;
 export type Field=typeof fields[number];

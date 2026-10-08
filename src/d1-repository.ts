@@ -1,3 +1,4 @@
+import {authorityHash,databaseNow,type ReplayAdmission} from './replay-ledger.js';
 import type {SourceAuthority} from './source-mappings.js';
 import {defaultId,SliceError,utc,uuidV4,type Scope} from './contracts.js';
 import {businessTables,type Table,type Row,type AcceptanceStore,type AcceptanceRepository,type AcceptanceTarget} from './persistence.js';
@@ -37,6 +38,7 @@ export class D1Repository implements AcceptanceRepository {
  /** Pass the original D1Database binding: non-session operations always route to primary. */
  #identity:object;
  authorityBinding():object{return this.#identity;}
+ replayBinding():object{return this.#identity;}
  #db:D1Binding;#clock:()=>string;#generator:()=>string;
  constructor(db:D1Binding,clock:()=>string,generator:()=>string=defaultId){
   this.#db=Object.freeze({prepare:db.prepare.bind(db),batch:db.batch.bind(db)});this.#clock=clock;this.#generator=generator;
@@ -44,7 +46,8 @@ export class D1Repository implements AcceptanceRepository {
   if('getBookmark' in db)throw new SliceError('context','D1Database sessions are not accepted: a primary binding is required');
  }
  id():string {const id=this.#generator();if(!uuidV4.test(id)) throw new SliceError('validation','Generator must return UUIDv4');return id;}
- now():string {const now=this.#clock();if(!utc(now)) throw new SliceError('validation','Clock must return UTC ISO timestamp');return now;}
+ #now():string {const now=this.#clock();if(!utc(now)) throw new SliceError('validation','Clock must return UTC ISO timestamp');return now;}
+ now():string {return this.#now();}
  async createTenant(display_name:string) {
   const row={id:this.id(),display_name,lifecycle_status:'active',created_at:this.now()};
   await this.#db.prepare('INSERT INTO tenants (id,display_name,lifecycle_status,created_at) VALUES (?,?,?,?)').bind(...Object.values(row)).run();return row;
@@ -71,16 +74,20 @@ export class D1Repository implements AcceptanceRepository {
  async #batch(statements:D1Statement[]):Promise<unknown[]> {
   try{return await this.#db.batch(statements);}catch(error){throw normalizeFailure(error);}
  }
- async accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T,target?:AcceptanceTarget,authority?:SourceAuthority):Promise<T> {
+ async accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T,target?:AcceptanceTarget,authority?:SourceAuthority,replay?:ReplayAdmission):Promise<T> {
   const captured=this.#capture(scope);
   const expected=authority?Object.freeze({...authority}):undefined;
   if(expected&&(expected.tenant_id!==captured.tenant_id||expected.environment!==captured.environment||expected.operation!=='ingest_mock_lead'||!target||expected.source_binding!==target.source_binding||!uuidV4.test(expected.id)||!Number.isSafeInteger(expected.version)||expected.version<1))throw new SliceError('context','Invalid acceptance authority');
+  const admission=replay?Object.freeze({...replay}):undefined;
+  if(admission&&(!expected||admission.tenant_id!==captured.tenant_id||admission.authority_ref!==authorityHash(expected)||!Number.isSafeInteger(admission.deadline)||![admission.nonce_ref,admission.fingerprint].every(x=>typeof x==='string'&&/^[0-9a-f]{64}$/.test(x))))throw new SliceError('context','Invalid replay admission');
+  const fresh=()=>this.#db.prepare(`SELECT EXISTS(SELECT 1 FROM replay_ledger WHERE nonce_ref=? AND tenant_id=? AND mapping_id=? AND authority_ref=? AND fingerprint=? AND deadline=? AND expired=0 AND deadline>max(?,${databaseNow})) AS fresh`).bind(admission!.nonce_ref,captured.tenant_id,expected!.id,admission!.authority_ref,admission!.fingerprint,admission!.deadline,Date.parse(this.#now()));
   const authorized=()=>this.#db.prepare("SELECT EXISTS(SELECT 1 FROM source_mappings WHERE id=? AND version=? AND provider=? AND source=? AND principal=? AND tenant_id=? AND source_binding=? AND operation=? AND environment=? AND status='active') AS authorized").bind(expected!.id,expected!.version,expected!.provider,expected!.source,expected!.principal,expected!.tenant_id,expected!.source_binding,expected!.operation,expected!.environment);
   const snapshots=new Map<Table,Row[]>();
   // One transactional read batch: qualification cannot be from a different lead version.
   const reads=await this.#batch([
    this.#db.prepare("SELECT id FROM tenants WHERE id=? AND lifecycle_status='active'").bind(captured.tenant_id),
    ...(expected?[authorized()]:[]),
+   ...(admission?[fresh()]:[]),
    ...businessTables.map(table=>{
     if(!target)return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? LIMIT 101`).bind(captured.tenant_id); // trusted bounded maintenance only
     const {source_binding,source_event_id,source_lead_id}=target;
@@ -92,7 +99,8 @@ export class D1Repository implements AcceptanceRepository {
   ]) as {results:Row[]}[];
   if(reads[0].results.length!==1) throw new SliceError('context','Tenant inactive at snapshot');
   if(expected&&reads[1].results[0]?.authorized!==1)throw new SliceError('context','Source authority unavailable at snapshot');
-  const offset=expected?2:1;
+  if(admission&&reads[2].results[0]?.fresh!==1)throw new SliceError('expired','Replay admission expired at snapshot');
+  const offset=(expected?2:1)+(admission?1:0);
   if(!target&&reads.slice(offset).some(r=>r.results.length>100))throw new SliceError('context','Maintenance snapshot exceeds 100 rows per table; supply an exact acceptance target');
   businessTables.forEach((table,index)=>snapshots.set(table,reads[index+offset].results));
   const statements:D1Statement[]=[];
@@ -125,6 +133,12 @@ export class D1Repository implements AcceptanceRepository {
   };
   const outcome=work(store);
   if(statements.length) {
+   if(admission){
+    const assertion=()=>this.#db.prepare(`INSERT INTO replay_assertions (fresh) SELECT EXISTS(SELECT 1 FROM replay_ledger WHERE nonce_ref=? AND tenant_id=? AND mapping_id=? AND authority_ref=? AND fingerprint=? AND deadline=? AND expired=0 AND deadline>max(?,${databaseNow}))`).bind(admission.nonce_ref,captured.tenant_id,expected!.id,admission.authority_ref,admission.fingerprint,admission.deadline,Date.parse(this.#now()));
+    statements.unshift(assertion(),this.#db.prepare('DELETE FROM replay_assertions'));
+    // Check again after all business writes, within the SAME rollback boundary.
+    statements.push(assertion(),this.#db.prepare('DELETE FROM replay_assertions'));
+   }
    if(expected)statements.unshift(this.#db.prepare("INSERT INTO authority_assertions (authorized) SELECT EXISTS(SELECT 1 FROM source_mappings WHERE id=? AND version=? AND provider=? AND source=? AND principal=? AND tenant_id=? AND source_binding=? AND operation=? AND environment=? AND status='active')").bind(expected.id,expected.version,expected.provider,expected.source,expected.principal,expected.tenant_id,expected.source_binding,expected.operation,expected.environment),this.#db.prepare('DELETE FROM authority_assertions'));
    statements.unshift(
     this.#db.prepare("INSERT INTO acceptance_assertions (active) VALUES (CASE WHEN EXISTS (SELECT 1 FROM tenants WHERE id=? AND lifecycle_status='active') THEN 1 ELSE 0 END)").bind(captured.tenant_id),
@@ -132,6 +146,7 @@ export class D1Repository implements AcceptanceRepository {
    );
    try {await this.#batch(statements);}
    catch(error) {
+    if(errorMessages(error).join('\n').includes('apacely_replay_fresh'))throw new SliceError('expired','Replay admission expired at commit');
     if(errorMessages(error).join('\n').includes('apacely_source_authority'))throw new SliceError('context','Source authority unavailable at commit');
     if(errorMessages(error).join('\n').includes('apacely_active_scope')) throw new SliceError('context','Tenant inactive at commit');
     const message=errorMessages(error).join('\n');

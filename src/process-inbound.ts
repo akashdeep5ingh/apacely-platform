@@ -1,3 +1,4 @@
+import type {ReplayAdmission} from './replay-ledger.js';
 import type {SourceAuthority} from './source-mappings.js';
 import {fields,fingerprint,validateInput,POLICY,SliceError,type Context,type Scope,type Input} from './contracts.js';
 import {evaluate,type Evaluation} from './qualification.js';
@@ -23,14 +24,16 @@ export class Processor {
   this.maxRetries=options.maxRetries??3;
   if(!Number.isInteger(this.maxRetries)||this.maxRetries<0||this.maxRetries>3) throw new SliceError('validation','Retry budget must be 0..3');
  }
- async process(ctx:Context,raw:unknown,authority?:SourceAuthority):Promise<Outcome> {
+ async process(ctx:Context,raw:unknown,authority?:SourceAuthority,replay?:ReplayAdmission):Promise<Outcome> {
+  const capturedReplay=replay?Object.freeze({...replay}):undefined;
+  if(capturedReplay&&(!authority||!this.repo.replayBinding))throw new SliceError('context','Replay-aware authority required');
   const capturedAuthority=authority?Object.freeze({...authority}):undefined;
   if(capturedAuthority&&!this.repo.authorityBinding)throw new SliceError('context','Authority-aware repository required');
   const input=validateInput(raw),scope=Object.freeze(this.registry.resolve(ctx)),source=ctx.source_binding;
   const key=JSON.stringify([scope.tenant_id,source,input.source_lead_id]);
   const work=(this.queues.get(key)??Promise.resolve()).catch(()=>undefined).then(async()=>{
    for(let retries=0;;retries++) {
-    try {return await this.repo.accept(scope,store=>accept(this.repo,store,scope,source,input,this.options),{source_binding:source,source_event_id:input.source_event_id,source_lead_id:input.source_lead_id},capturedAuthority);}
+    try {return await this.repo.accept(scope,store=>accept(this.repo,store,scope,source,input,this.options),{source_binding:source,source_event_id:input.source_event_id,source_lead_id:input.source_lead_id},capturedAuthority,capturedReplay);}
     catch(error) {
      const code=(error as {code?:string})?.code;
      if(!['SQLITE_BUSY','SQLITE_BUSY_SNAPSHOT','SQLITE_LOCKED','LOCAL_VERSION_CONFLICT','D1_TRANSIENT'].includes(code??'')) throw error;

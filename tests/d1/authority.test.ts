@@ -7,19 +7,20 @@ async function run(code:string){
  const bundle=await build({stdin:{resolveDir:process.cwd(),contents:`
  import {WorkerEntrypoint} from 'cloudflare:workers';
  import {D1Repository} from './src/d1-repository.ts';
+ import {D1ReplayLedger} from './src/replay-ledger.ts';
  import {D1SourceMappingStore} from './src/source-mappings.ts';
  import {Ingress} from './src/worker-ingress.ts';
  import {Processor,Registry} from './src/process-inbound.ts';
  import {fixture} from './src/fixture.ts';
  export default class extends WorkerEntrypoint {async verify(){
- const check=(x,m)=>{if(!x)throw new Error(m)},now='2026-01-01T12:00:01.000Z',db=this.env.DB;
+ const check=(x,m)=>{if(!x)throw new Error(m)},now=new Date().toISOString(),db=this.env.DB;
  let hook=async()=>{};
  const binding={prepare:db.prepare.bind(db),batch:async s=>{await hook(s);return db.batch(s);}};
  const repo=new D1Repository(binding,()=>now),store=new D1SourceMappingStore(binding,()=>now);
  const t1=await repo.createTenant('Synthetic one'),t2=await repo.createTenant('Synthetic two');
  const base={provider:'synthetic',source:'source-one',principal:'actor-one',tenant_id:t1.id,source_binding:'mock-source-001',environment:'development',operation:'ingest_mock_lead'};
- const mapping=await store.create(base),logs=[],nonces=new Map();
- const dependencies={repo,now:()=>now,mappings:store,log:r=>logs.push(r),verifier:{verify:async x=>({...x,principal:base.principal,source:base.source,signed_at:now,nonce:'nonce-one'})},replay:{bind:async(k,v)=>{const old=nonces.get(k);if(old&&old!==v)return false;nonces.set(k,v);return true;}}};
+ const mapping=await store.create(base),logs=[];
+ const dependencies={repo,now:()=>now,mappings:store,log:r=>logs.push(r),verifier:{verify:async x=>({...x,principal:base.principal,source:base.source,signed_at:now,nonce:'nonce-one'})},replay:new D1ReplayLedger(binding,()=>now)};
  const request=(input=fixture)=>new Request('https://local.invalid/v1/ingress/synthetic',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});
  const send=async(i=new Ingress(dependencies),input=fixture)=>{const r=await i.handle(request(input));return {status:r.status,body:await r.json()};};
  const count=async table=>(await db.prepare('SELECT count(*) n FROM '+table).first()).n;
@@ -33,7 +34,7 @@ async function run(code:string){
 }
 test('revocation after planning before D1 acceptance batch aborts every business write',()=>run(`
  let revoked=false;
- hook=async s=>{if(s.length>8&&!revoked){revoked=true;await db.prepare("UPDATE source_mappings SET status='revoked',version=version+1,revoked_version=version+1,revoked_at=?,updated_at=? WHERE tenant_id=? AND id=?").bind(now,now,t1.id,mapping.id).run();}};
+ hook=async s=>{if(s.length>9&&!revoked){revoked=true;await db.prepare("UPDATE source_mappings SET status='revoked',version=version+1,revoked_version=version+1,revoked_at=?,updated_at=? WHERE tenant_id=? AND id=?").bind(now,now,t1.id,mapping.id).run();}};
  const result=await send();check(result.status===403,'revoked at actual batch must reject');check(revoked,'write checkpoint reached');await empty();
 `));
 test('persisted versioned source authority accepts through shared core and exact replay',()=>run(`
@@ -51,7 +52,7 @@ test('ingress captures collaborators and their methods before verifier await',()
   repo.accept=async()=>{throw new Error('replaced method')};repo.assertScope=async()=>{throw new Error('replaced scope method')};repo.id=()=>{throw new Error('replaced id')};repo.now=()=>{throw new Error('replaced clock')};
   store.resolve=async()=>{throw new Error('replaced resolver')};store.authorityBinding=()=>({});
   dependencies.mappings={resolve:store.resolve,authorityBinding:()=>({})};dependencies.verifier.verify=async()=>null;
-  dependencies.replay.bind=async()=>false;dependencies.replay={bind:async()=>false};dependencies.now=()=>'';dependencies.log=()=>{throw new Error('replaced log')};
+  dependencies.replay.claim=async()=>({outcome:'conflict'});dependencies.replay={claim:async()=>({outcome:'conflict'}),authorityBinding:()=>({})};dependencies.now=()=>'';dependencies.log=()=>{throw new Error('replaced log')};
   binding.prepare=()=>{throw new Error('replaced prepare')};binding.batch=async()=>{throw new Error('replaced batch')};repo.db={};repo.generator=()=>'';repo.clock=()=>'';
   return verify(x);
  };
@@ -90,10 +91,10 @@ test('mapping read errors classify transient unavailable and permanent failure w
   const failing={prepare:sql=>{const stmt=db.prepare(sql);if(sql.startsWith('SELECT * FROM source_mappings'))return {bind:()=>({all:async()=>{reads++;throw new Error('D1_ERROR: '+detail);}})};return stmt;},batch:db.batch.bind(db)};
   const failedStore=new D1SourceMappingStore(failing,()=>now),failedRepo=new D1Repository(failing,()=>now);
   let captured;try{await failedStore.resolve(base);}catch(e){captured=e;}check(captured?.name==='MappingStoreError'&&captured.code===code,'typed safe store failure');check(!JSON.stringify(captured).includes('private'),'typed error disclosure');
-  const r=await send(new Ingress({...dependencies,repo:failedRepo,mappings:failedStore}));check(r.status===status,'safe failure classification '+r.status);check(reads===2,'blind mapping retry');
+  const r=await send(new Ingress({...dependencies,repo:failedRepo,mappings:failedStore,replay:new D1ReplayLedger(failing,()=>now)}));check(r.status===status,'safe failure classification '+r.status);check(reads===2,'blind mapping retry');
   check(!JSON.stringify([r,logs]).includes('private'),'public error disclosure');
  }
- for(const record of logs)check(Object.keys(record).sort().join(',')==='code,request_id,status','closed logs');await empty();
+ for(const record of logs)check(Object.keys(record).sort().join(',')==='code,failure_category,provider_category,replay_outcome,request_id,status','closed logs');await empty();
 
 `));
 
@@ -124,7 +125,7 @@ test('revocation at coherent duplicate replay read rejects stored outcome withou
 
  const accepted=await send();check(accepted.status===200,'initial acceptance');
  const before=await db.prepare('SELECT * FROM action_outbox').all();let revoked=false;
- hook=async s=>{if(s.length===8&&!revoked){revoked=true;await store.revoke({tenant_id:t1.id,environment:'development'},mapping.id,1);}};
+ hook=async s=>{if(s.length===9&&!revoked){revoked=true;await store.revoke({tenant_id:t1.id,environment:'development'},mapping.id,1);}};
  check((await send()).status===403,'revoked replay snapshot');check(revoked,'replay checkpoint');
  check(JSON.stringify((await db.prepare('SELECT * FROM action_outbox').all()).results)===JSON.stringify(before.results),'replay changed outbox');check(await count('events')===1,'replay event');
 
@@ -139,8 +140,8 @@ test('mapping changes at write boundary reject stale version and tenant movement
   // Restore baseline with a fresh version before capture; never reset a version.
   if(current.version!==1){await db.prepare("UPDATE source_mappings SET principal=?,tenant_id=?,source_binding=?,status='active',version=version+1,updated_at=? WHERE id=?").bind(base.principal,t1.id,base.source_binding,now,mapping.id).run();}
   const authority=(await store.resolve(base))[0];frozenStore.resolve=async()=>[authority];
-  hook=async s=>{if(s.length>8&&!changed){changed=true;await db.prepare('UPDATE source_mappings SET '+mutation+',version=version+1,updated_at=? WHERE id=?').bind(now,mapping.id).run();}};
-  const isolated={...dependencies,mappings:frozenStore,replay:{bind:async()=>true}};
+  hook=async s=>{if(s.length>9&&!changed){changed=true;await db.prepare('UPDATE source_mappings SET '+mutation+',version=version+1,updated_at=? WHERE id=?').bind(now,mapping.id).run();}};
+  const verify=dependencies.verifier.verify;const isolated={...dependencies,mappings:frozenStore,verifier:{verify:async x=>({...await verify(x),nonce:'version-'+authority.version})}};
   check((await send(new Ingress(isolated))).status===403,'changed mapping committed '+mutation);check(changed,'write race checkpoint');await empty();
  }
 
@@ -149,7 +150,7 @@ test('mapping changes at write boundary reject stale version and tenant movement
 test('revocation during retry never refreshes stale captured authorization',()=>run(`
 
  let writes=0,reads=0;
- hook=async s=>{if(s.length===8)reads++;if(s.length>8&&++writes===1){await store.update({tenant_id:t1.id,environment:'development'},mapping.id,1,{principal:'replacement'});throw new Error('D1_ERROR: Network connection lost.');}};
+ hook=async s=>{if(s.length===9)reads++;if(s.length>9&&++writes===1){await store.update({tenant_id:t1.id,environment:'development'},mapping.id,1,{principal:'replacement'});throw new Error('D1_ERROR: Network connection lost.');}};
  const result=await send();check(result.status===403,'retry refreshed authority');check(writes===1&&reads===2,'bounded stale retry');await empty();
 
 `));
@@ -157,7 +158,7 @@ test('revocation during retry never refreshes stale captured authorization',()=>
 test('two independent requests lose to revocation before either durable batch',()=>run(`
 
  let reached=0,ready,release;const waiting=new Promise(r=>ready=r),gate=new Promise(r=>release=r);
- hook=async s=>{if(s.length>8){if(++reached===2)ready();await gate;}};
+ hook=async s=>{if(s.length>9){if(++reached===2)ready();await gate;}};
  const other=new D1Repository(binding,()=>now),a=send(new Ingress(dependencies)),b=send(new Ingress({...dependencies,repo:other}));
  await waiting;await store.revoke({tenant_id:t1.id,environment:'development'},mapping.id,1);release();
  const results=await Promise.all([a,b]);check(results.every(r=>r.status===403),'concurrent revocation loser accepted');await empty();
@@ -188,10 +189,10 @@ test('local mapping creation rejects unknown fields instead of interpolating cal
 
 test('collaborator replacement while mapping or replay awaits cannot change captured wiring',()=>run(`
 
- const originalResolve=store.resolve.bind(store),originalBind=dependencies.replay.bind.bind(dependencies.replay);
+ const originalResolve=store.resolve.bind(store),originalBind=dependencies.replay.claim.bind(dependencies.replay);
  for(const phase of ['mapping','replay']){
   const mutation=()=>{dependencies.repo={};dependencies.mappings={};dependencies.verifier={};dependencies.replay={};dependencies.now=()=>'';dependencies.log=()=>{};repo.accept=async()=>{throw new Error('replaced')};repo.assertScope=async()=>{throw new Error('replaced')};store.resolve=async()=>[];store.authorityBinding=()=>({});};
-  const local={repo:new D1Repository(binding,()=>now),now:()=>now,verifier:{verify:async x=>({...x,principal:base.principal,source:base.source,signed_at:now,nonce:'phase-'+phase})},mappings:{authorityBinding:()=>binding,resolve:async p=>{const result=await originalResolve(p);if(phase==='mapping')mutation();return result;}},replay:{bind:async(k,v)=>{const result=await originalBind(k,v);if(phase==='replay')mutation();return result;}},log:r=>logs.push(r)};
+  const local={repo:new D1Repository(binding,()=>now),now:()=>now,verifier:{verify:async x=>({...x,principal:base.principal,source:base.source,signed_at:now,nonce:'phase-'+phase})},mappings:{authorityBinding:()=>binding,resolve:async p=>{const result=await originalResolve(p);if(phase==='mapping')mutation();return result;}},replay:{authorityBinding:()=>binding,claim:async k=>{const result=await originalBind(k);if(phase==='replay')mutation();return result;}},log:r=>logs.push(r)};
   const i=new Ingress(local);local.repo.accept=async()=>{throw new Error('replaced local method')};
   const result=await send(i);check(result.status===200,'captured '+phase);check(await count('action_outbox')===1,'duplicate '+phase);
  }
@@ -214,7 +215,7 @@ test('revocation before update batch leaves existing business and outbox rows un
  check((await send()).status===200,'initial accepted');
  const tables=['leads','conversations','events','messages','qualification_state','action_outbox'],before=[];
  for(const table of tables)before.push((await db.prepare('SELECT * FROM '+table+' ORDER BY rowid').all()).results);
- let revoked=false;hook=async s=>{if(s.length>8&&!revoked){revoked=true;await store.revoke({tenant_id:t1.id,environment:'development'},mapping.id,1);}};
+ let revoked=false;hook=async s=>{if(s.length>9&&!revoked){revoked=true;await store.revoke({tenant_id:t1.id,environment:'development'},mapping.id,1);}};
  const verify=dependencies.verifier.verify;dependencies.verifier.verify=async x=>({...await verify(x),nonce:'next-request'});
  const result=await send(new Ingress(dependencies),{...fixture,source_event_id:'next-event',source_sequence:2,qualification:{location:null}});check(result.status===403,'revoked update accepted');check(revoked,'update batch reached');
  for(const [index,table] of tables.entries())check(JSON.stringify((await db.prepare('SELECT * FROM '+table+' ORDER BY rowid').all()).results)===JSON.stringify(before[index]),'revoked update changed '+table);

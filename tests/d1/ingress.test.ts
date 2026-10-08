@@ -9,19 +9,20 @@ async function run(code:string){
  import {WorkerEntrypoint} from 'cloudflare:workers';
  import {Ingress} from './src/worker-ingress.ts';
  import {D1Repository} from './src/d1-repository.ts';
+ import {D1ReplayLedger} from './src/replay-ledger.ts';
  import {D1SourceMappingStore} from './src/source-mappings.ts';
  import {fixture} from './src/fixture.ts';
  export default class extends WorkerEntrypoint {async verify(){
  const check=(x,m)=>{if(!x)throw new Error(m)};
- const now='2026-01-01T12:00:01.000Z',repo=new D1Repository(this.env.DB,()=>now);
+ const now=new Date().toISOString(),repo=new D1Repository(this.env.DB,()=>now);
  const t1=await repo.createTenant('Synthetic one'),t2=await repo.createTenant('Synthetic two');
- const logs=[],nonces=new Map();let calls=0;
+ const logs=[];let calls=0;
  const store=new D1SourceMappingStore(this.env.DB,()=>now);
  const initial=await store.create({principal:'actor-one',provider:'synthetic',source:'source-one',tenant_id:t1.id,source_binding:'mock-source-001',environment:'development',operation:'ingest_mock_lead'});
  const dependencies={repo,now:()=>now,log:x=>logs.push(x),
  verifier:{verify:async x=>({principal:'actor-one',provider:x.provider,source:'source-one',signed_at:now,nonce:'nonce-one',body_digest:x.body_digest,method:x.method,path:x.path})},
  mappings:{resolve:async()=>[{...initial}],authorityBinding:()=>this.env.DB},
- replay:{bind:async(key,digest)=>{const old=nonces.get(key);if(old&&old!==digest)return false;nonces.set(key,digest);return true;}}};
+ replay:new D1ReplayLedger(this.env.DB,()=>now)};
  const ingress=new Ingress(dependencies);
  const request=(body=JSON.stringify(fixture),headers={},method='POST',path='/v1/ingress/synthetic')=>new Request('https://local.invalid'+path,{method,headers:{'content-type':'application/json',...headers},body:method==='GET'?undefined:body});
  const send=async(...args)=>{const response=await new Ingress(dependencies).handle(request(...args));return {status:response.status,body:await response.json()};};
@@ -79,13 +80,13 @@ test('safe failures log closed fields and exact replay recovers ambiguous commit
  dependencies.mappings.resolve=async()=>{throw new Error('secret body SQL stack injection');};const failed=await send();check(failed.status===500,'unknown internal');
  dependencies.mappings.resolve=mapping;
  check(logs.length===3,'every response logged');
- for(const log of logs){check(Object.keys(log).sort().join(',')==='code,request_id,status','closed log');check(/^[0-9a-f-]{36}$/.test(log.request_id),'generated trace');}
+ for(const log of logs){check(Object.keys(log).sort().join(',')==='code,failure_category,provider_category,replay_outcome,request_id,status','closed log');check(/^[0-9a-f-]{36}$/.test(log.request_id),'generated trace');}
  check(!JSON.stringify([logs,lost,failed]).includes('secret'),'sensitive error leaked');
 `));
 
 test('authenticated replay binds raw bytes and freshness without consuming recovery',()=>run(`
  const verify=dependencies.verifier.verify;
- for(const change of [{body_digest:'bad'},{provider:'other'},{method:'GET'},{path:'/wrong'},{signed_at:'2026-01-01T11:50:00.000Z'},{signed_at:'2026-01-01T12:01:00.000Z'},{nonce:''}]){dependencies.verifier.verify=async x=>({...await verify(x),...change});check((await send()).status===401,'invalid authenticated metadata');}
+ for(const change of [{body_digest:'bad'},{provider:'other'},{method:'GET'},{path:'/wrong'},{signed_at:new Date(Date.parse(now)-600000).toISOString()},{signed_at:new Date(Date.parse(now)+60000).toISOString()},{nonce:''}]){dependencies.verifier.verify=async x=>({...await verify(x),...change});check((await send()).status===401,'invalid authenticated metadata');}
  dependencies.verifier.verify=verify;
  const first=await send(),same=await send();check(first.status===200&&same.body.event_id===first.body.event_id,'exact replay');
  check((await send(JSON.stringify({...fixture,text:'changed'}))).status===409,'nonce reuse');
