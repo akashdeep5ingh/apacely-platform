@@ -1,8 +1,9 @@
-import {defaultId,SliceError,utc,uuidV4,type Scope} from './contracts.js';
+import {assertDatabaseEnvironment} from './environment.js';
+import {defaultId,SliceError,utc,uuidV4,trustedEnvironment,type Environment,type Scope} from './contracts.js';
 import {normalizeFailure,type D1Binding} from './d1-repository.js';
 export interface SourceAuthority {
  id:string;version:number;provider:string;source:string;principal:string;tenant_id:string;source_binding:string;
- environment:'development';operation:'ingest_mock_lead';
+ environment:Environment;operation:'ingest_mock_lead';
 }
 export interface SourceMapping extends SourceAuthority {
  status:'active'|'inactive'|'revoked';created_at:string;updated_at:string;revoked_at:string|null;revoked_version:number|null;
@@ -17,7 +18,9 @@ export class MappingStoreError extends Error {
 }
 export class D1SourceMappingStore implements SourceMappingStore {
  #db:D1Binding;#identity:object;#clock:()=>string;
- constructor(db:D1Binding,clock:()=>string){
+ #environment:Environment;
+ constructor(db:D1Binding,clock:()=>string,environment:Environment='development'){
+  this.#environment=trustedEnvironment(environment);
   if('getBookmark' in db)throw new SliceError('context','Primary mapping binding required');
   this.#identity=db;this.#db=Object.freeze({prepare:db.prepare.bind(db),batch:db.batch.bind(db)});this.#clock=clock;
  }
@@ -33,7 +36,8 @@ export class D1SourceMappingStore implements SourceMappingStore {
   const captured={...input};
   const allowed=['provider','source','principal','tenant_id','source_binding','environment','operation'];
   if(Object.keys(captured).length!==allowed.length||Object.keys(captured).some(k=>!allowed.includes(k)))throw new MappingStoreError('denied');
-  if(!uuidV4.test(captured.tenant_id)||captured.environment!=='development'||captured.operation!=='ingest_mock_lead'||![captured.provider,captured.source,captured.principal,captured.source_binding].every(x=>typeof x==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(x)))throw new MappingStoreError('denied');
+  if(!uuidV4.test(captured.tenant_id)||captured.environment!==this.#environment||captured.operation!=='ingest_mock_lead'||![captured.provider,captured.source,captured.principal,captured.source_binding].every(x=>typeof x==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(x)))throw new MappingStoreError('denied');
+  await this.#call(()=>assertDatabaseEnvironment(this.#db,this.#environment));
   const now=this.#now(),row:SourceMapping={...captured,id:defaultId(),version:1,status:'active',created_at:now,updated_at:now,revoked_at:null,revoked_version:null};
   const keys=Object.keys(row);
   await this.#call(()=>this.#db.prepare(`INSERT INTO source_mappings (${keys.join(',')}) VALUES (${keys.map(()=>'?').join(',')})`).bind(...Object.values(row)).run());
@@ -49,13 +53,15 @@ export class D1SourceMappingStore implements SourceMappingStore {
  }
  async #mutate(scope:Scope,id:string,version:number,patch:Record<string,string|number>):Promise<SourceMapping>{
   const tenant_id=scope?.tenant_id;
-  if(scope?.environment!=='development'||!uuidV4.test(tenant_id)||!uuidV4.test(id)||!Number.isSafeInteger(version)||version<1||version>=Number.MAX_SAFE_INTEGER)throw new MappingStoreError('denied');
+  if(scope?.environment!==this.#environment||!uuidV4.test(tenant_id)||!uuidV4.test(id)||!Number.isSafeInteger(version)||version<1||version>=Number.MAX_SAFE_INTEGER)throw new MappingStoreError('denied');
+  await this.#call(()=>assertDatabaseEnvironment(this.#db,this.#environment));
   const keys=Object.keys(patch),now=this.#now();
   const result=await this.#call(()=>this.#db.prepare(`UPDATE source_mappings SET ${keys.map(k=>k+'=?').join(',')},version=version+1,updated_at=? WHERE tenant_id=? AND id=? AND version=? AND status!='revoked' RETURNING *`).bind(...Object.values(patch),now,tenant_id,id,version).all<SourceMapping>());
   if(result.results.length!==1)throw new MappingStoreError('denied');return Object.freeze({...result.results[0]});
  }
  async resolve(identity:{provider:string;source:string}):Promise<readonly SourceMapping[]>{
   const {provider,source}=identity;
+  await this.#call(()=>assertDatabaseEnvironment(this.#db,this.#environment));
   const result=await this.#call(()=>this.#db.prepare('SELECT * FROM source_mappings WHERE provider=? AND source=? LIMIT 2').bind(provider,source).all<SourceMapping>());
   return result.results.map(row=>Object.freeze({...row}));
  }

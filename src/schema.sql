@@ -1,4 +1,13 @@
 PRAGMA foreign_keys = ON;
+-- Singleton belongs to the physical database, not to any tenant or request.
+CREATE TABLE IF NOT EXISTS database_environment (
+ singleton INTEGER PRIMARY KEY CHECK(singleton=1), environment TEXT NOT NULL CHECK(environment='development')
+);
+INSERT INTO database_environment SELECT 1,'development' WHERE NOT EXISTS(SELECT 1 FROM database_environment);
+CREATE TRIGGER IF NOT EXISTS environment_no_replace BEFORE INSERT ON database_environment
+ WHEN EXISTS(SELECT 1 FROM database_environment) BEGIN SELECT RAISE(ABORT,'apacely_environment_immutable'); END;
+CREATE TRIGGER IF NOT EXISTS environment_no_update BEFORE UPDATE ON database_environment BEGIN SELECT RAISE(ABORT,'apacely_environment_immutable'); END;
+CREATE TRIGGER IF NOT EXISTS environment_no_delete BEFORE DELETE ON database_environment BEGIN SELECT RAISE(ABORT,'apacely_environment_immutable'); END;
 -- Batch-local assertions: inserted/deleted in the same atomic D1 batch.
 -- Named CHECK failures abort the whole batch (zero-row CAS is not success).
 CREATE TABLE IF NOT EXISTS acceptance_assertions (

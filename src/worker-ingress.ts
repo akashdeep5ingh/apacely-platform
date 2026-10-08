@@ -2,7 +2,7 @@ import {Deadline,DeadlineError,OverloadError,RateError,enforceRate,LocalAdmissio
 import {ReplayStoreError,type ReplayLedger,type ReplayOutcome} from './replay-ledger.js';
 import {sha256} from '@noble/hashes/sha256';
 import {bytesToHex} from '@noble/hashes/utils';
-import {validateInput,SliceError,utc} from './contracts.js';
+import {validateInput,SliceError,utc,trustedEnvironment,type Environment} from './contracts.js';
 import {Processor,Registry} from './process-inbound.js';
 import type {AcceptanceRepository} from './persistence.js';
 import {MappingStoreError,type SourceMappingStore,type SourceMapping} from './source-mappings.js';
@@ -19,7 +19,9 @@ export class Ingress {
  #options:Readonly<OperationalOptions>;
  #admission:Readonly<Pick<LocalAdmission,'enter'|'source'>>;
  #rates:DependenciesRate;
- constructor(dependencies:Dependencies,options:OperationalOptions={}){
+ #environment:Environment;#checkDatabase?:()=>Promise<void>;
+ constructor(dependencies:Dependencies,options:OperationalOptions={},environment:Environment='development',checkDatabase?:()=>Promise<void>){
+  this.#environment=trustedEnvironment(environment);this.#checkDatabase=checkDatabase;
   this.#options=Object.freeze({...options});
   const rates=options.rates??localRates;this.#rates=Object.freeze({preauth:rates.preauth.bind(rates),authenticated:rates.authenticated.bind(rates)});
   const admission=options.admission??([options.globalLimit,options.sourceLimit,options.maxSources].some(x=>x!==undefined)?new LocalAdmission(options.globalLimit,options.sourceLimit,options.maxSources):localAdmission);
@@ -45,6 +47,7 @@ export class Ingress {
  let releaseGlobal:(()=>void)|undefined,releaseSource:(()=>void)|undefined;
  const work=(async()=>{
  operation.check();releaseGlobal=this.#admission.enter();if(this.#rates)enforceRate(this.#rates.preauth());
+ if(this.#checkDatabase){await this.#checkDatabase();operation.check();}
  const d=this.#dependencies,url=new URL(request.url),path=url.pathname;
  if(request.method!=='POST')throw new BoundaryError(405,'method');
  if(url.search||!/^\/v1\/ingress\/[a-z][a-z0-9_-]{0,31}$/.test(path))throw new BoundaryError(404,'route');
@@ -66,9 +69,9 @@ export class Ingress {
  operation.check();const mappings=await d.mappings.resolve(proof);operation.check();
  if(mappings.length!==1)throw new BoundaryError(403,'forbidden');
  const mapping=Object.freeze({...mappings[0]});
- if(mapping.status!=='active'||!Number.isSafeInteger(mapping.version)||mapping.version<1||mapping.principal!==proof.principal||mapping.provider!==provider||mapping.provider!==proof.provider||mapping.source!==proof.source||mapping.environment!=='development'||mapping.operation!=='ingest_mock_lead')throw new BoundaryError(403,'forbidden');
+ if(mapping.status!=='active'||!Number.isSafeInteger(mapping.version)||mapping.version<1||mapping.principal!==proof.principal||mapping.provider!==provider||mapping.provider!==proof.provider||mapping.source!==proof.source||mapping.environment!==this.#environment||mapping.operation!=='ingest_mock_lead')throw new BoundaryError(403,'forbidden');
  releaseSource=this.#admission.source(bytesToHex(sha256(new TextEncoder().encode(JSON.stringify([proof.provider,proof.principal,proof.source])))));
- await d.repo.assertScope({tenant_id:mapping.tenant_id,environment:'development'});operation.check();
+ await d.repo.assertScope({tenant_id:mapping.tenant_id,environment:this.#environment});operation.check();
  if(this.#rates)enforceRate(this.#rates.authenticated(Object.freeze({provider:proof.provider,principal:proof.principal,source:proof.source})));operation.check();
  const requestDigest=bytesToHex(sha256(new TextEncoder().encode(JSON.stringify([request.method,path,proof.signed_at,body_digest,mapping.id,mapping.version,mapping.tenant_id,mapping.source_binding]))));
  operation.check();const claim=await d.replay.claim({authority:mapping,nonce:proof.nonce,fingerprint:requestDigest,signed_at:proof.signed_at},operation);operation.check();replay_outcome=claim.outcome;
@@ -76,8 +79,8 @@ export class Ingress {
  if(claim.outcome==='expired')throw new BoundaryError(401,'unauthenticated');
  if(!claim.admission)throw new BoundaryError(500,'internal');
  const guardedRepo:AcceptanceRepository={...d.repo,accept:(scope,plan,...rest)=>{operation.check();return d.repo.accept(scope,store=>{operation.check();const result=plan(store);operation.check();return result;},...rest);}};
- const processor=new Processor(guardedRepo,new Registry([[mapping.source_binding,mapping.tenant_id] as const]));
- const outcome=await processor.process({environment:'development',source_binding:mapping.source_binding,operation:'ingest_mock_lead'},input,mapping,claim.admission);
+ const processor=new Processor(guardedRepo,new Registry([[mapping.source_binding,mapping.tenant_id] as const],this.#environment));
+ const outcome=await processor.process({environment:this.#environment,source_binding:mapping.source_binding,operation:'ingest_mock_lead'},input,mapping,claim.admission);
  operation.check();return outcome.event.event_id;
  })().finally(()=>{releaseSource?.();releaseGlobal?.();});
  // Observe late rejection and retain the actual pipeline (including permit release), not only its response race.

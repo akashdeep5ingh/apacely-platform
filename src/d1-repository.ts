@@ -1,6 +1,7 @@
+import {assertDatabaseEnvironment,environmentPredicate} from './environment.js';
 import {authorityHash,databaseNow,type ReplayAdmission} from './replay-ledger.js';
 import type {SourceAuthority} from './source-mappings.js';
-import {defaultId,SliceError,utc,uuidV4,type Scope} from './contracts.js';
+import {defaultId,SliceError,utc,uuidV4,trustedEnvironment,type Environment,type Scope} from './contracts.js';
 import {businessTables,type Table,type Row,type AcceptanceStore,type AcceptanceRepository,type AcceptanceTarget} from './persistence.js';
 /** Structural subset of the D1 binding API; no Cloudflare SDK/runtime dependency. */
 export interface D1Statement {
@@ -40,7 +41,9 @@ export class D1Repository implements AcceptanceRepository {
  authorityBinding():object{return this.#identity;}
  replayBinding():object{return this.#identity;}
  #db:D1Binding;#clock:()=>string;#generator:()=>string;
- constructor(db:D1Binding,clock:()=>string,generator:()=>string=defaultId){
+ #environment:Environment;
+ constructor(db:D1Binding,clock:()=>string,generator:()=>string=defaultId,environment:Environment='development'){
+  this.#environment=trustedEnvironment(environment);
   this.#db=Object.freeze({prepare:db.prepare.bind(db),batch:db.batch.bind(db)});this.#clock=clock;this.#generator=generator;
   this.#identity=db;
   if('getBookmark' in db)throw new SliceError('context','D1Database sessions are not accepted: a primary binding is required');
@@ -49,23 +52,24 @@ export class D1Repository implements AcceptanceRepository {
  #now():string {const now=this.#clock();if(!utc(now)) throw new SliceError('validation','Clock must return UTC ISO timestamp');return now;}
  now():string {return this.#now();}
  async createTenant(display_name:string) {
+  await assertDatabaseEnvironment(this.#db,this.#environment);
   const row={id:this.id(),display_name,lifecycle_status:'active',created_at:this.now()};
   await this.#db.prepare('INSERT INTO tenants (id,display_name,lifecycle_status,created_at) VALUES (?,?,?,?)').bind(...Object.values(row)).run();return row;
  }
  #capture(scope:Scope):Scope {
-  if(!scope||scope.environment!=='development'||!uuidV4.test(scope.tenant_id)) throw new SliceError('context','Active trusted development tenant scope required');
+  if(!scope||scope.environment!==this.#environment||!uuidV4.test(scope.tenant_id)) throw new SliceError('context','Active trusted development tenant scope required');
   return Object.freeze({...scope});
  }
  async assertScope(scope:Scope):Promise<void> {
   const captured=this.#capture(scope);
-  const {results}=await this.#db.prepare("SELECT id FROM tenants WHERE id=? AND lifecycle_status='active'").bind(captured.tenant_id).all();
+  const {results}=await this.#db.prepare(`SELECT id FROM tenants WHERE id=? AND lifecycle_status='active' AND ${environmentPredicate(this.#environment)}`).bind(captured.tenant_id).all();
   if(results.length!==1) throw new SliceError('context','Active trusted development tenant scope required');
  }
  async rows(scope:Scope,table:Table):Promise<Row[]> {
   const captured=this.#capture(scope);this.#table(table);
   const reads=await this.#batch([
-   this.#db.prepare("SELECT id FROM tenants WHERE id=? AND lifecycle_status='active'").bind(captured.tenant_id),
-   this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND EXISTS (SELECT 1 FROM tenants WHERE id=? AND lifecycle_status='active') ORDER BY rowid`).bind(captured.tenant_id,captured.tenant_id)
+   this.#db.prepare(`SELECT id FROM tenants WHERE id=? AND lifecycle_status='active' AND ${environmentPredicate(this.#environment)}`).bind(captured.tenant_id),
+   this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND ${environmentPredicate(this.#environment)} AND EXISTS (SELECT 1 FROM tenants WHERE id=? AND lifecycle_status='active') ORDER BY rowid`).bind(captured.tenant_id,captured.tenant_id)
   ]) as {results:Row[]}[];
   if(reads[0].results.length!==1)throw new SliceError('context','Tenant inactive at diagnostic snapshot');
   return reads[1].results;
@@ -79,21 +83,21 @@ export class D1Repository implements AcceptanceRepository {
   const expected=authority?Object.freeze({...authority}):undefined;
   if(expected&&(expected.tenant_id!==captured.tenant_id||expected.environment!==captured.environment||expected.operation!=='ingest_mock_lead'||!target||expected.source_binding!==target.source_binding||!uuidV4.test(expected.id)||!Number.isSafeInteger(expected.version)||expected.version<1))throw new SliceError('context','Invalid acceptance authority');
   const admission=replay?Object.freeze({...replay}):undefined;
-  if(admission&&(!expected||admission.tenant_id!==captured.tenant_id||admission.authority_ref!==authorityHash(expected)||!Number.isSafeInteger(admission.deadline)||![admission.nonce_ref,admission.fingerprint].every(x=>typeof x==='string'&&/^[0-9a-f]{64}$/.test(x))))throw new SliceError('context','Invalid replay admission');
+  if(admission&&(!expected||admission.environment!==captured.environment||admission.tenant_id!==captured.tenant_id||admission.authority_ref!==authorityHash(expected)||!Number.isSafeInteger(admission.deadline)||![admission.nonce_ref,admission.fingerprint].every(x=>typeof x==='string'&&/^[0-9a-f]{64}$/.test(x))))throw new SliceError('context','Invalid replay admission');
   const fresh=()=>this.#db.prepare(`SELECT EXISTS(SELECT 1 FROM replay_ledger WHERE nonce_ref=? AND tenant_id=? AND mapping_id=? AND authority_ref=? AND fingerprint=? AND deadline=? AND expired=0 AND deadline>max(?,${databaseNow})) AS fresh`).bind(admission!.nonce_ref,captured.tenant_id,expected!.id,admission!.authority_ref,admission!.fingerprint,admission!.deadline,Date.parse(this.#now()));
   const authorized=()=>this.#db.prepare("SELECT EXISTS(SELECT 1 FROM source_mappings WHERE id=? AND version=? AND provider=? AND source=? AND principal=? AND tenant_id=? AND source_binding=? AND operation=? AND environment=? AND status='active') AS authorized").bind(expected!.id,expected!.version,expected!.provider,expected!.source,expected!.principal,expected!.tenant_id,expected!.source_binding,expected!.operation,expected!.environment);
   const snapshots=new Map<Table,Row[]>();
   // One transactional read batch: qualification cannot be from a different lead version.
   const reads=await this.#batch([
-   this.#db.prepare("SELECT id FROM tenants WHERE id=? AND lifecycle_status='active'").bind(captured.tenant_id),
+   this.#db.prepare(`SELECT id FROM tenants WHERE id=? AND lifecycle_status='active' AND ${environmentPredicate(this.#environment)}`).bind(captured.tenant_id),
    ...(expected?[authorized()]:[]),
    ...(admission?[fresh()]:[]),
    ...businessTables.map(table=>{
-    if(!target)return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? LIMIT 101`).bind(captured.tenant_id); // trusted bounded maintenance only
+    if(!target)return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND ${environmentPredicate(this.#environment)} LIMIT 101`).bind(captured.tenant_id); // trusted bounded maintenance only
     const {source_binding,source_event_id,source_lead_id}=target;
-    if(table==='events')return this.#db.prepare('SELECT * FROM events WHERE tenant_id=? AND source_binding=? AND source_event_id=?').bind(captured.tenant_id,source_binding,source_event_id);
-    if(table==='leads')return this.#db.prepare('SELECT * FROM leads WHERE tenant_id=? AND source_binding=? AND source_lead_id=?').bind(captured.tenant_id,source_binding,source_lead_id);
-    if(table==='conversations'||table==='qualification_state')return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND lead_id=(SELECT id FROM leads WHERE tenant_id=? AND source_binding=? AND source_lead_id=?)${table==='conversations'?' AND source_binding=?':''}`).bind(captured.tenant_id,captured.tenant_id,source_binding,source_lead_id,...(table==='conversations'?[source_binding]:[]));
+    if(table==='events')return this.#db.prepare(`SELECT * FROM events WHERE tenant_id=? AND ${environmentPredicate(this.#environment)} AND source_binding=? AND source_event_id=?`).bind(captured.tenant_id,source_binding,source_event_id);
+    if(table==='leads')return this.#db.prepare(`SELECT * FROM leads WHERE tenant_id=? AND ${environmentPredicate(this.#environment)} AND source_binding=? AND source_lead_id=?`).bind(captured.tenant_id,source_binding,source_lead_id);
+    if(table==='conversations'||table==='qualification_state')return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND ${environmentPredicate(this.#environment)} AND lead_id=(SELECT id FROM leads WHERE tenant_id=? AND source_binding=? AND source_lead_id=?)${table==='conversations'?' AND source_binding=?':''}`).bind(captured.tenant_id,captured.tenant_id,source_binding,source_lead_id,...(table==='conversations'?[source_binding]:[]));
     return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND 0`).bind(captured.tenant_id);
    })
   ]) as {results:Row[]}[];
@@ -141,7 +145,7 @@ export class D1Repository implements AcceptanceRepository {
    }
    if(expected)statements.unshift(this.#db.prepare("INSERT INTO authority_assertions (authorized) SELECT EXISTS(SELECT 1 FROM source_mappings WHERE id=? AND version=? AND provider=? AND source=? AND principal=? AND tenant_id=? AND source_binding=? AND operation=? AND environment=? AND status='active')").bind(expected.id,expected.version,expected.provider,expected.source,expected.principal,expected.tenant_id,expected.source_binding,expected.operation,expected.environment),this.#db.prepare('DELETE FROM authority_assertions'));
    statements.unshift(
-    this.#db.prepare("INSERT INTO acceptance_assertions (active) VALUES (CASE WHEN EXISTS (SELECT 1 FROM tenants WHERE id=? AND lifecycle_status='active') THEN 1 ELSE 0 END)").bind(captured.tenant_id),
+    this.#db.prepare(`INSERT INTO acceptance_assertions (active) VALUES (CASE WHEN EXISTS (SELECT 1 FROM tenants WHERE id=? AND lifecycle_status='active') AND ${environmentPredicate(this.#environment)} THEN 1 ELSE 0 END)`).bind(captured.tenant_id),
     this.#db.prepare('DELETE FROM acceptance_assertions')
    );
    try {await this.#batch(statements);}

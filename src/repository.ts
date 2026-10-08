@@ -1,22 +1,31 @@
 import Database from 'better-sqlite3';
 import {readFileSync} from 'node:fs';
-import {defaultId,SliceError,utc,uuidV4,type Scope} from './contracts.js';
+import {defaultId,SliceError,utc,uuidV4,trustedEnvironment,type Environment,type Scope} from './contracts.js';
 import {businessTables,type Table,type Row,type AcceptanceStore} from './persistence.js';
 export {businessTables,type Table,type Row} from './persistence.js';
 export interface UnitOfWork {transaction<T>(work:()=>T):T}
 /** Local interactive SQLite adapter only; a future D1 adapter must supply its own atomic unit. */
 export class Repository implements UnitOfWork {
  private db:Database.Database;
- constructor(path:string,readonly clock:()=>string,private generator:()=>string=defaultId) {
+ #environment:Environment;
+ constructor(path:string,readonly clock:()=>string,private generator:()=>string=defaultId,environment:Environment='development') {
+  this.#environment=trustedEnvironment(environment);
   this.db=new Database(path,{timeout:0});
-  this.db.pragma('foreign_keys = ON');
-  this.db.exec(readFileSync(new URL('./schema.sql',import.meta.url),'utf8'));
+  try{
+   this.db.pragma('foreign_keys = ON');
+   // Only the legacy standalone development constructor provisions a fresh local DB.
+   const objects=this.db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'").all();
+   if(this.#environment==='development'&&objects.length===0)this.db.transaction(()=>this.db.exec(readFileSync(new URL('./schema.sql',import.meta.url),'utf8')))();
+   this.#assertEnvironment();
+  }catch(error){this.db.close();throw error;}
  }
+ #assertEnvironment():void {const rows=this.db.prepare('SELECT singleton,environment FROM database_environment').all() as {singleton:number;environment:string}[];if(rows.length!==1||rows[0].singleton!==1||rows[0].environment!==this.#environment)throw new SliceError('context','Database environment mismatch');}
  id():string {const id=this.generator();if(!uuidV4.test(id)) throw new SliceError('validation','Generator must return UUIDv4');return id;}
  now():string {const now=this.clock();if(!utc(now)) throw new SliceError('validation','Clock must return UTC ISO timestamp');return now;}
- createTenant(display_name:string) {const row={id:this.id(),display_name,lifecycle_status:'active',created_at:this.now()};this.db.prepare('INSERT INTO tenants VALUES (@id,@display_name,@lifecycle_status,@created_at)').run(row);return row;}
+ createTenant(display_name:string) {this.#assertEnvironment();const row={id:this.id(),display_name,lifecycle_status:'active',created_at:this.now()};this.db.prepare('INSERT INTO tenants VALUES (@id,@display_name,@lifecycle_status,@created_at)').run(row);return row;}
  assertScope(scope:Scope):void {
-  if(!scope||scope.environment!=='development'||!uuidV4.test(scope.tenant_id)||!this.db.prepare("SELECT id FROM tenants WHERE id=? AND lifecycle_status='active'").get(scope.tenant_id)) throw new SliceError('context','Active trusted development tenant scope required');
+  this.#assertEnvironment();
+  if(!scope||scope.environment!==this.#environment||!uuidV4.test(scope.tenant_id)||!this.db.prepare("SELECT id FROM tenants WHERE id=? AND lifecycle_status='active'").get(scope.tenant_id)) throw new SliceError('context','Active trusted development tenant scope required');
  }
  scoped(scope:Scope):ScopedRepository {this.assertScope(scope);const captured=Object.freeze({...scope});return new ScopedRepository(this.db,captured,()=>this.assertScope(captured));}
  accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T):T {return this.transaction(()=>work(this.scoped(scope)));}

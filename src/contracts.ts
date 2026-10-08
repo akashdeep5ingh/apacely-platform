@@ -6,8 +6,10 @@ export const fields=['intent','timeline','financing_status','location','property
 export type Field=typeof fields[number];
 export type Facts=Record<Field,string|null>;
 export interface Input {schema_version:1;source_event_id:string;source_lead_id:string;source_sequence:number;occurred_at:string;channel:'mock';contact_reference:string;text:string;qualification:Partial<Facts>;handoff_requested:boolean}
-export interface Context {environment:'development';source_binding:string;operation:'ingest_mock_lead'}
-export interface Scope {tenant_id:string;environment:'development'}
+export type Environment='development'|'staging';
+export function trustedEnvironment(value:unknown):Environment {if(value!=='development'&&value!=='staging')throw new SliceError('context','Explicit supported environment required');return value;}
+export interface Context {environment:Environment;source_binding:string;operation:'ingest_mock_lead'}
+export interface Scope {tenant_id:string;environment:Environment}
 export const uuidV4=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const defaultId=()=>globalThis.crypto.randomUUID();
 const enums:Partial<Record<Field,readonly string[]>>={intent:['buy','rent','sell','unknown'],timeline:['0_3_months','3_6_months','over_6_months','unknown'],financing_status:['preapproved','cash','not_started','unknown'],property_type:['condo','house','townhouse','commercial','unknown']};
