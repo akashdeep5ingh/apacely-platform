@@ -1,0 +1,4095 @@
+{
+  "label": "PUBLIC_TEST_VECTOR_NOT_SECRET",
+  "synthetic_mappings": {
+    "development": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "version": 1,
+      "tenant_id": "22222222-2222-4222-8222-222222222222",
+      "source_binding": "public-binding-001",
+      "operation": "ingest_mock_lead",
+      "environment": "development",
+      "provider": "synthetic",
+      "source": "public-source-001",
+      "principal": "public-principal-001",
+      "status": "active"
+    },
+    "staging": {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "version": 1,
+      "tenant_id": "44444444-4444-4444-8444-444444444444",
+      "source_binding": "public-binding-001",
+      "operation": "ingest_mock_lead",
+      "environment": "staging",
+      "provider": "synthetic",
+      "source": "public-source-001",
+      "principal": "public-principal-001",
+      "status": "active"
+    }
+  },
+  "status": "APPROVED_PROTOCOL_IMPLEMENTATION_REVIEW_PENDING",
+  "runtime_auth_tests": "HISTORICAL_BLOCKED_CHECKPOINT_SUPERSEDED_BY_CURRENT_DOCS",
+  "domain": "apacely-synthetic-ingress-hmac-v1",
+  "keys": [
+    {
+      "label": "PUBLIC_TEST_VECTOR_NOT_SECRET",
+      "key_id": "public-dev-01",
+      "key_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "environment": "development",
+      "provider": "synthetic",
+      "principal": "public-principal-001",
+      "source": "public-source-001",
+      "route": "/v1/ingress/synthetic",
+      "not_before": "2026-10-08T11:00:00.000Z",
+      "not_after": "2026-10-08T13:00:00.000Z",
+      "revoked_at": null
+    },
+    {
+      "label": "PUBLIC_TEST_VECTOR_NOT_SECRET",
+      "key_id": "public-stage-old",
+      "key_hex": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+      "environment": "staging",
+      "provider": "synthetic",
+      "principal": "public-principal-001",
+      "source": "public-source-001",
+      "route": "/v1/ingress/synthetic",
+      "not_before": "2026-10-08T11:00:00.000Z",
+      "not_after": "2026-10-08T12:05:00.000Z",
+      "revoked_at": null
+    },
+    {
+      "label": "PUBLIC_TEST_VECTOR_NOT_SECRET",
+      "key_id": "public-stage-new",
+      "key_hex": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+      "environment": "staging",
+      "provider": "synthetic",
+      "principal": "public-principal-001",
+      "source": "public-source-001",
+      "route": "/v1/ingress/synthetic",
+      "not_before": "2026-10-08T12:00:00.000Z",
+      "not_after": "2026-10-08T13:00:00.000Z",
+      "revoked_at": null
+    }
+  ],
+  "messages": [
+    {
+      "id": "POSDEV",
+      "key_id": "public-dev-01",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "development",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-dev-01",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T12:00:00.000Z",
+        "public-nonce-0000000000000001",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"development\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-dev-01\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T12:00:00.000Z\",\"public-nonce-0000000000000001\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c22646576656c6f706d656e74222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d6465762d3031222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431323a30303a30302e3030305a222c227075626c69632d6e6f6e63652d30303030303030303030303030303031222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJkZXZlbG9wbWVudCIsInN5bnRoZXRpYyIsInB1YmxpYy1wcmluY2lwYWwtMDAxIiwicHVibGljLXNvdXJjZS0wMDEiLCJwdWJsaWMtZGV2LTAxIiwiUE9TVCIsIi92MS9pbmdyZXNzL3N5bnRoZXRpYyIsIjIwMjYtMTAtMDhUMTI6MDA6MDAuMDAwWiIsInB1YmxpYy1ub25jZS0wMDAwMDAwMDAwMDAwMDAxIiwiYWZkMzBiZTRhMDRjNDQyN2Y2MmY2NjhlNjc2MzVkMzFlOGZkYmI0MTE4NThjZDY2ZDNlYTVhYTVhMjIzMmY5NSJd",
+      "signature_hex": "4ae4f8a7a7a5e3ce84f90b9339da70da88d1fe5a7cc0abc587f3ffd4d6e472ac",
+      "signature_base64url": "SuT4p6el486E-QuTOdpw2ojR_lp8wKvFh_P_1Nbkcqw",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-dev-01"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "SuT4p6el486E-QuTOdpw2ojR_lp8wKvFh_P_1Nbkcqw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "development",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-nonce-0000000000000001"
+        ],
+        "nonce_ref": "8bc2d9eea5605fb03338f95fc101c9f070844524dec4018fd0b6ecfbfad18d86",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "development",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-dev-01",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T12:00:00.000Z",
+          "public-nonce-0000000000000001",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "11111111-1111-4111-8111-111111111111",
+          1,
+          "22222222-2222-4222-8222-222222222222",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "e6cea41c725db3079de70cf02b37ed0daf8f7f11570651a7dcd37a51288bd593",
+        "authority_tuple": [
+          "11111111-1111-4111-8111-111111111111",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "22222222-2222-4222-8222-222222222222",
+          "public-binding-001",
+          "development",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "d455c5a880c93caf7ab62aebcb2b621582f3cfffa09aa42b7f678e3d2f07e22c"
+      }
+    },
+    {
+      "id": "POSSTAGE",
+      "key_id": "public-stage-old",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-old",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T12:00:00.000Z",
+        "public-nonce-0000000000000001",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-old\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T12:00:00.000Z\",\"public-nonce-0000000000000001\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6f6c64222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431323a30303a30302e3030305a222c227075626c69632d6e6f6e63652d30303030303030303030303030303031222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1vbGQiLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMjowMDowMC4wMDBaIiwicHVibGljLW5vbmNlLTAwMDAwMDAwMDAwMDAwMDEiLCJhZmQzMGJlNGEwNGM0NDI3ZjYyZjY2OGU2NzYzNWQzMWU4ZmRiYjQxMTg1OGNkNjZkM2VhNWFhNWEyMjMyZjk1Il0",
+      "signature_hex": "89f14a681303a2fb737cc4dcd431c6ff31e88d2b8316fdbeeae8cacc9cce57e2",
+      "signature_base64url": "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-nonce-0000000000000001"
+        ],
+        "nonce_ref": "5c699dd2ea575b7c1b65ca1cd8c1da6a22e3a5c920b600ddae1b37aede3544e7",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-old",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T12:00:00.000Z",
+          "public-nonce-0000000000000001",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "9ad575bb0f79cfca992b720b215598445e979429362546e8d1ae8e6d97e373b2",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    },
+    {
+      "id": "POSSTAGE_NEW",
+      "key_id": "public-stage-new",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-new",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T12:00:00.000Z",
+        "public-nonce-0000000000000001",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-new\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T12:00:00.000Z\",\"public-nonce-0000000000000001\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6e6577222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431323a30303a30302e3030305a222c227075626c69632d6e6f6e63652d30303030303030303030303030303031222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1uZXciLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMjowMDowMC4wMDBaIiwicHVibGljLW5vbmNlLTAwMDAwMDAwMDAwMDAwMDEiLCJhZmQzMGJlNGEwNGM0NDI3ZjYyZjY2OGU2NzYzNWQzMWU4ZmRiYjQxMTg1OGNkNjZkM2VhNWFhNWEyMjMyZjk1Il0",
+      "signature_hex": "1e71b99d8003e8099f99dabbd581f031056b83dd0f2d551c5a82cb3a7716481a",
+      "signature_base64url": "HnG5nYAD6Amfmdq71YHwMQVrg90PLVUcWoLLOncWSBo",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "HnG5nYAD6Amfmdq71YHwMQVrg90PLVUcWoLLOncWSBo"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-nonce-0000000000000001"
+        ],
+        "nonce_ref": "5c699dd2ea575b7c1b65ca1cd8c1da6a22e3a5c920b600ddae1b37aede3544e7",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-new",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T12:00:00.000Z",
+          "public-nonce-0000000000000001",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "7a782a2d8cb506c811c8c7fcffb25f45be746da8fc671c742d584e70b19fb81b",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    },
+    {
+      "id": "PAST_299999_SIGNED",
+      "key_id": "public-stage-old",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-old",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T11:55:00.001Z",
+        "boundary-PAST_299999",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-old\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T11:55:00.001Z\",\"boundary-PAST_299999\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6f6c64222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431313a35353a30302e3030315a222c22626f756e646172792d504153545f323939393939222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1vbGQiLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMTo1NTowMC4wMDFaIiwiYm91bmRhcnktUEFTVF8yOTk5OTkiLCJhZmQzMGJlNGEwNGM0NDI3ZjYyZjY2OGU2NzYzNWQzMWU4ZmRiYjQxMTg1OGNkNjZkM2VhNWFhNWEyMjMyZjk1Il0",
+      "signature_hex": "98b7a8099eb415ab6864dd1fc33d0c0abab81ff38050ae1506c17a9fe2684c7c",
+      "signature_base64url": "mLeoCZ60FatoZN0fwz0MCrq4H_OAUK4VBsF6n-JoTHw",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T11:55:00.001Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-PAST_299999"
+          ],
+          [
+            "Apacely-Signature",
+            "mLeoCZ60FatoZN0fwz0MCrq4H_OAUK4VBsF6n-JoTHw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "boundary-PAST_299999"
+        ],
+        "nonce_ref": "2bab884364f91682f8ba164e9d0cec6fd5e21ccdc5021c19e05f8de4e3c376a8",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-old",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T11:55:00.001Z",
+          "boundary-PAST_299999",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "161d61aecf717040e97b2bc9412f8169fa8eeea965fef7d8fa5043cd2828018a",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    },
+    {
+      "id": "PAST_300000_SIGNED",
+      "key_id": "public-stage-old",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-old",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T11:55:00.000Z",
+        "boundary-PAST_300000",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-old\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T11:55:00.000Z\",\"boundary-PAST_300000\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6f6c64222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431313a35353a30302e3030305a222c22626f756e646172792d504153545f333030303030222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1vbGQiLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMTo1NTowMC4wMDBaIiwiYm91bmRhcnktUEFTVF8zMDAwMDAiLCJhZmQzMGJlNGEwNGM0NDI3ZjYyZjY2OGU2NzYzNWQzMWU4ZmRiYjQxMTg1OGNkNjZkM2VhNWFhNWEyMjMyZjk1Il0",
+      "signature_hex": "6e144972ab608fabc373ab9471e531d26b50dfa27bfb8e697ecaca4a836b267c",
+      "signature_base64url": "bhRJcqtgj6vDc6uUceUx0mtQ36J7-45pfsrKSoNrJnw",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T11:55:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-PAST_300000"
+          ],
+          [
+            "Apacely-Signature",
+            "bhRJcqtgj6vDc6uUceUx0mtQ36J7-45pfsrKSoNrJnw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "boundary-PAST_300000"
+        ],
+        "nonce_ref": "3c89e4b8184b83b16bf91a2f4efcbf5f569037a7ba537ae4349704f66e4767cd",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-old",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T11:55:00.000Z",
+          "boundary-PAST_300000",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "c68ddfa9bed678560ddb3637dc6c8f6b1799313596bc9ca30c82af87640cf0bf",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    },
+    {
+      "id": "FUTURE_30000_SIGNED",
+      "key_id": "public-stage-old",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-old",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T12:00:30.000Z",
+        "boundary-FUTURE_30000",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-old\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T12:00:30.000Z\",\"boundary-FUTURE_30000\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6f6c64222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431323a30303a33302e3030305a222c22626f756e646172792d4655545552455f3330303030222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1vbGQiLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMjowMDozMC4wMDBaIiwiYm91bmRhcnktRlVUVVJFXzMwMDAwIiwiYWZkMzBiZTRhMDRjNDQyN2Y2MmY2NjhlNjc2MzVkMzFlOGZkYmI0MTE4NThjZDY2ZDNlYTVhYTVhMjIzMmY5NSJd",
+      "signature_hex": "56b86d393cfbaee86d19127ecaacd2a54c9d5cf48f3b01302de82a7cf14dff5c",
+      "signature_base64url": "VrhtOTz7ruhtGRJ-yqzSpUydXPSPOwEwLegqfPFN_1w",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:30.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-FUTURE_30000"
+          ],
+          [
+            "Apacely-Signature",
+            "VrhtOTz7ruhtGRJ-yqzSpUydXPSPOwEwLegqfPFN_1w"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "boundary-FUTURE_30000"
+        ],
+        "nonce_ref": "0b3708583b306dfb91f7d51538e39976e6de9cac576491b0d2d10d74602962e2",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-old",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T12:00:30.000Z",
+          "boundary-FUTURE_30000",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "cf729199eb79adbd743f59a676b03d34608f0ae5c42912ec1fee6745f3e5984a",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    },
+    {
+      "id": "FUTURE_30001_SIGNED",
+      "key_id": "public-stage-old",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-old",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T12:00:30.001Z",
+        "boundary-FUTURE_30001",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-old\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T12:00:30.001Z\",\"boundary-FUTURE_30001\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6f6c64222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431323a30303a33302e3030315a222c22626f756e646172792d4655545552455f3330303031222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1vbGQiLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMjowMDozMC4wMDFaIiwiYm91bmRhcnktRlVUVVJFXzMwMDAxIiwiYWZkMzBiZTRhMDRjNDQyN2Y2MmY2NjhlNjc2MzVkMzFlOGZkYmI0MTE4NThjZDY2ZDNlYTVhYTVhMjIzMmY5NSJd",
+      "signature_hex": "2971874ca5b18cc6aa322304060fc327a1fb3608e5d6792bc26830815f8abb6c",
+      "signature_base64url": "KXGHTKWxjMaqMiMEBg_DJ6H7Ngjl1nkrwmgwgV-Ku2w",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:30.001Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-FUTURE_30001"
+          ],
+          [
+            "Apacely-Signature",
+            "KXGHTKWxjMaqMiMEBg_DJ6H7Ngjl1nkrwmgwgV-Ku2w"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "boundary-FUTURE_30001"
+        ],
+        "nonce_ref": "a246ce41a0142390fe8dab1a18551ffa825e431c7b48b8d8bfa78aa439f14bd3",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-old",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T12:00:30.001Z",
+          "boundary-FUTURE_30001",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "a02d23150158dafe3009129f37e03893135277a181476e1022ed654f22b91296",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    },
+    {
+      "id": "OLD_KEY_END_SIGNED",
+      "key_id": "public-stage-old",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-old",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T12:04:59.999Z",
+        "key-boundary",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-old\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T12:04:59.999Z\",\"key-boundary\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6f6c64222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431323a30343a35392e3939395a222c226b65792d626f756e64617279222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1vbGQiLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMjowNDo1OS45OTlaIiwia2V5LWJvdW5kYXJ5IiwiYWZkMzBiZTRhMDRjNDQyN2Y2MmY2NjhlNjc2MzVkMzFlOGZkYmI0MTE4NThjZDY2ZDNlYTVhYTVhMjIzMmY5NSJd",
+      "signature_hex": "9b51987dee36c83b2f3b12fc292158e49d49a1449ad704cb65d82188ea5d9f8a",
+      "signature_base64url": "m1GYfe42yDsvOxL8KSFY5J1JoUSa1wTLZdghiOpdn4o",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:04:59.999Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "key-boundary"
+          ],
+          [
+            "Apacely-Signature",
+            "m1GYfe42yDsvOxL8KSFY5J1JoUSa1wTLZdghiOpdn4o"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "key-boundary"
+        ],
+        "nonce_ref": "073a51969fe9105a1ef16fde4831db3f1c5518a05ab20c1b7daa53c2a03e16b2",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-old",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T12:04:59.999Z",
+          "key-boundary",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "86073afacb74154553f715545ad3b587d688a61b982d1ec61105f6ea0e699ab9",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    },
+    {
+      "id": "ROTATION_NEW_FRESH_SIGNED",
+      "key_id": "public-stage-new",
+      "canonical_tuple": [
+        "apacely-synthetic-ingress-hmac-v1",
+        "staging",
+        "synthetic",
+        "public-principal-001",
+        "public-source-001",
+        "public-stage-new",
+        "POST",
+        "/v1/ingress/synthetic",
+        "2026-10-08T12:00:00.000Z",
+        "public-nonce-new-key-00000001",
+        "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95"
+      ],
+      "body_utf8": "{\"schema_version\":1,\"source_event_id\":\"public-event-001\",\"source_lead_id\":\"public-lead-001\",\"source_sequence\":1,\"occurred_at\":\"2026-01-01T12:00:00.000Z\",\"channel\":\"mock\",\"contact_reference\":\"public-contact-001\",\"text\":\"Synthetic café\",\"qualification\":{},\"handoff_requested\":false}",
+      "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d",
+      "body_sha256": "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+      "message_utf8": "[\"apacely-synthetic-ingress-hmac-v1\",\"staging\",\"synthetic\",\"public-principal-001\",\"public-source-001\",\"public-stage-new\",\"POST\",\"/v1/ingress/synthetic\",\"2026-10-08T12:00:00.000Z\",\"public-nonce-new-key-00000001\",\"afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95\"]",
+      "message_utf8_hex": "5b2261706163656c792d73796e7468657469632d696e67726573732d686d61632d7631222c2273746167696e67222c2273796e746865746963222c227075626c69632d7072696e636970616c2d303031222c227075626c69632d736f757263652d303031222c227075626c69632d73746167652d6e6577222c22504f5354222c222f76312f696e67726573732f73796e746865746963222c22323032362d31302d30385431323a30303a30302e3030305a222c227075626c69632d6e6f6e63652d6e65772d6b65792d3030303030303031222c2261666433306265346130346334343237663632663636386536373633356433316538666462623431313835386364363664336561356161356132323332663935225d",
+      "message_base64url": "WyJhcGFjZWx5LXN5bnRoZXRpYy1pbmdyZXNzLWhtYWMtdjEiLCJzdGFnaW5nIiwic3ludGhldGljIiwicHVibGljLXByaW5jaXBhbC0wMDEiLCJwdWJsaWMtc291cmNlLTAwMSIsInB1YmxpYy1zdGFnZS1uZXciLCJQT1NUIiwiL3YxL2luZ3Jlc3Mvc3ludGhldGljIiwiMjAyNi0xMC0wOFQxMjowMDowMC4wMDBaIiwicHVibGljLW5vbmNlLW5ldy1rZXktMDAwMDAwMDEiLCJhZmQzMGJlNGEwNGM0NDI3ZjYyZjY2OGU2NzYzNWQzMWU4ZmRiYjQxMTg1OGNkNjZkM2VhNWFhNWEyMjMyZjk1Il0",
+      "signature_hex": "0061b4a5c8451de6439c0ac63d38ff31eea519c0762ebf6e60d3b1924814ed0c",
+      "signature_base64url": "AGG0pchFHeZDnArGPTj_Me6lGcB2Lr9uYNOxkkgU7Qw",
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-new-key-00000001"
+          ],
+          [
+            "Apacely-Signature",
+            "AGG0pchFHeZDnArGPTj_Me6lGcB2Lr9uYNOxkkgU7Qw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "proposed_replay_binding": {
+        "nonce_identity_tuple": [
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-nonce-new-key-00000001"
+        ],
+        "nonce_ref": "abb7e1a4ecdb86df4b9de2c1f5fec23e24209ca8621d46a9d43c06d2bc8b22c9",
+        "fingerprint_tuple": [
+          "apacely-synthetic-nonce-binding-v1",
+          "staging",
+          "synthetic",
+          "public-principal-001",
+          "public-source-001",
+          "public-stage-new",
+          "POST",
+          "/v1/ingress/synthetic",
+          "2026-10-08T12:00:00.000Z",
+          "public-nonce-new-key-00000001",
+          "afd30be4a04c4427f62f668e67635d31e8fdbb411858cd66d3ea5aa5a2232f95",
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "ingest_mock_lead"
+        ],
+        "fingerprint": "ea09f5a496c8a3e903c981a4bdf3003434d7a17e57bd25e6fd83967cfb78a91d",
+        "authority_tuple": [
+          "33333333-3333-4333-8333-333333333333",
+          1,
+          "synthetic",
+          "public-source-001",
+          "public-principal-001",
+          "44444444-4444-4444-8444-444444444444",
+          "public-binding-001",
+          "staging",
+          "ingest_mock_lead"
+        ],
+        "authority_ref": "87e635c8c056b7ba593dd3dd00efd948c75175c0eca73818a93202bf2fbd5594"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "POSDEV",
+      "message_id": "POSDEV",
+      "context": {
+        "environment": "development",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-dev-01"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "SuT4p6el486E-QuTOdpw2ojR_lp8wKvFh_P_1Nbkcqw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "Valid proof; 200 additionally assumes valid mapping, fresh claim and successful acceptance",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "POSSTAGE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "Valid proof; 200 additionally assumes valid mapping, fresh claim and successful acceptance",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "POSSTAGE_NEW",
+      "message_id": "POSSTAGE_NEW",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "HnG5nYAD6Amfmdq71YHwMQVrg90PLVUcWoLLOncWSBo"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "Valid proof; 200 additionally assumes valid mapping, fresh claim and successful acceptance",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_BODY",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d20"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "raw digest changed",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_METHOD",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 405,
+        "reason": "method guard precedes crypto",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_PATH",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/other",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "valid grammar but registry route/provider mismatch",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_PATH_CASE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/V1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 404,
+        "reason": "route not exact",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_ENCODED_PATH",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/%73ynthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 404,
+        "reason": "no percent decoding",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_QUERY",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic?a=1",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 404,
+        "reason": "query forbidden",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_EMPTY_QUERY",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic?",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 404,
+        "reason": "proposed empty-query guard; absent in baseline",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_SOURCE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-002"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "claimed source cannot override key scope",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_KID_UNKNOWN",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "unknown-public-key"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "no fallback key",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_KID_SWITCH",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "kid and key material bound",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_NONCE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000002"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "nonce tamper",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_TIME",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.001Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signed timestamp tamper",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_ENV",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "development",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "key scoped to staging not development",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_ENV_SAME_MATERIAL",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "development",
+        "key_registry": "same-kid-material-wrong-env-test-only",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "deliberately invalid test registry copies kid/material into development; domain bytes still differ",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "NEG_PRINCIPAL",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "same-kid-material-changed-principal-test-only",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "deliberately changed trusted principal reconstructs different message",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MISSING_APACELY_KEY_ID",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "mandatory proof header missing",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MISSING_APACELY_SOURCE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "mandatory proof header missing",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MISSING_APACELY_SIGNED_AT",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "mandatory proof header missing",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MISSING_APACELY_NONCE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "mandatory proof header missing",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MISSING_APACELY_SIGNATURE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "mandatory proof header missing",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_KID_LENGTH",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SOURCE_COMMA",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001, public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_NONCE_SPACE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "bad nonce"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_NONCE_UNICODE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "café"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_TIME_NO_MILLIS",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_TIME_OFFSET",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000+00:00"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_TIME_CALENDAR",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-02-30T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_TIME_LEAP_SECOND",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:60.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_TIME_YEAR_ZERO",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "0000-01-01T00:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "proof value violates strict grammar",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SIG_PAD",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I="
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signature malformed/noncanonical or cryptographically false",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SIG_SHORT",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signature malformed/noncanonical or cryptographically false",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SIG_ALPHABET",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "+fFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signature malformed/noncanonical or cryptographically false",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SIG_TAIL_BITS",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-J"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signature malformed/noncanonical or cryptographically false",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SIG_COMMA",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I, ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signature malformed/noncanonical or cryptographically false",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SIG_SPACE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDov zfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signature malformed/noncanonical or cryptographically false",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "BAD_SIG_VALID_ENCODING",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "signature malformed/noncanonical or cryptographically false",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "DUP_IDENTICAL",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ],
+          [
+            "aPaCeLy-sOuRcE",
+            "public-source-001"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "Fetch comma-joins repeated proof values",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      },
+      "observable_headers": {
+        "apacely-source": "public-source-001, public-source-001"
+      }
+    },
+    {
+      "id": "DUP_DIFFERENT_CASE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ],
+          [
+            "aPaCeLy-sOuRcE",
+            "public-source-002"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "Fetch comma-joins repeated proof values",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      },
+      "observable_headers": {
+        "apacely-source": "public-source-001, public-source-002"
+      }
+    },
+    {
+      "id": "DUP_COLLAPSED_UPSTREAM",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "raw identical duplication undetectable if upstream collapsed; transport qualification blocks deployment",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      },
+      "raw_transport_note": "Two identical source lines were collapsed before Fetch; request contains only normalized single value"
+    },
+    {
+      "id": "UNKNOWN_PROOF_HEADER",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ],
+          [
+            "Apacely-Algorithm",
+            "HMAC-SHA-256"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "closed Apacely proof header set",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "FORGED_TENANT_HEADER",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ],
+          [
+            "X-Tenant-Id",
+            "foreign-synthetic-tenant"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "unrelated claimed tenant grants nothing; exact mapping remains authoritative",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "PAST_299999",
+      "message_id": "PAST_299999_SIGNED",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T11:55:00.001Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-PAST_299999"
+          ],
+          [
+            "Apacely-Signature",
+            "mLeoCZ60FatoZN0fwz0MCrq4H_OAUK4VBsF6n-JoTHw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "exact freshness boundary; successful admission additionally needs effective DB now inside deadline",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "PAST_300000",
+      "message_id": "PAST_300000_SIGNED",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T11:55:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-PAST_300000"
+          ],
+          [
+            "Apacely-Signature",
+            "bhRJcqtgj6vDc6uUceUx0mtQ36J7-45pfsrKSoNrJnw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "exact freshness boundary; successful admission additionally needs effective DB now inside deadline",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "FUTURE_30000",
+      "message_id": "FUTURE_30000_SIGNED",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:30.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-FUTURE_30000"
+          ],
+          [
+            "Apacely-Signature",
+            "VrhtOTz7ruhtGRJ-yqzSpUydXPSPOwEwLegqfPFN_1w"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "exact freshness boundary; successful admission additionally needs effective DB now inside deadline",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "FUTURE_30001",
+      "message_id": "FUTURE_30001_SIGNED",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:30.001Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "boundary-FUTURE_30001"
+          ],
+          [
+            "Apacely-Signature",
+            "KXGHTKWxjMaqMiMEBg_DJ6H7Ngjl1nkrwmgwgV-Ku2w"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "exact freshness boundary; successful admission additionally needs effective DB now inside deadline",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "KEY_NOT_BEFORE_MINUS1",
+      "message_id": "POSSTAGE_NEW",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T11:59:59.999Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "HnG5nYAD6Amfmdq71YHwMQVrg90PLVUcWoLLOncWSBo"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "key observation validity boundary",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "KEY_NOT_BEFORE_EQUAL",
+      "message_id": "POSSTAGE_NEW",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "HnG5nYAD6Amfmdq71YHwMQVrg90PLVUcWoLLOncWSBo"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "key observation validity boundary",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "KEY_NOT_AFTER_MINUS1",
+      "message_id": "OLD_KEY_END_SIGNED",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:04:59.999Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:04:59.999Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "key-boundary"
+          ],
+          [
+            "Apacely-Signature",
+            "m1GYfe42yDsvOxL8KSFY5J1JoUSa1wTLZdghiOpdn4o"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "key interval upper boundary exclusive",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "KEY_NOT_AFTER_EQUAL",
+      "message_id": "OLD_KEY_END_SIGNED",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:05:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:04:59.999Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "key-boundary"
+          ],
+          [
+            "Apacely-Signature",
+            "m1GYfe42yDsvOxL8KSFY5J1JoUSa1wTLZdghiOpdn4o"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "key interval upper boundary exclusive",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "KEY_REVOKED_PRECEDENCE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "old-revoked-at-now",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "identical-accepted-open-deadline",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "current revocation denies pre-revocation signed proof and previously accepted replay",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MAPPING_REVOKED",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "revoked",
+        "tenant": "active",
+        "replay": "identical-accepted-open-deadline",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "forbidden",
+        "http_status": 403,
+        "reason": "crypto valid; current exact authority required even for replay",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MAPPING_CHANGED",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "different-version",
+        "tenant": "active",
+        "replay": "identical-accepted-open-deadline",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "conflict",
+        "http_status": 409,
+        "reason": "crypto valid; newly resolved current ACTIVE changed version conflicts with already-bound nonce inside original deadline; withdrawn/invalid authority or captured-version cutoff race instead denies 403",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MAPPING_FOREIGN",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "wrong-principal-source",
+        "tenant": "active",
+        "replay": "identical-accepted-open-deadline",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "forbidden",
+        "http_status": 403,
+        "reason": "crypto valid; current exact authority required even for replay",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "MAPPING_AMBIGUOUS",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "two-results",
+        "tenant": "active",
+        "replay": "identical-accepted-open-deadline",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "forbidden",
+        "http_status": 403,
+        "reason": "crypto valid; current exact authority required even for replay",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "TENANT_INACTIVE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "inactive",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "forbidden",
+        "http_status": 403,
+        "reason": "active tenant required",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "ROTATION_OLD_REPLAY",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "identical-accepted-open-deadline",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "old key still valid, same immutable kid/nonce/authority, current mapping",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "ROTATION_NEW_SAME_NONCE",
+      "message_id": "POSSTAGE_NEW",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "reserved-by-POSSTAGE-open-deadline",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "HnG5nYAD6Amfmdq71YHwMQVrg90PLVUcWoLLOncWSBo"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "conflict",
+        "http_status": 409,
+        "reason": "nonce uniqueness excludes kid; immutable original binding includes old kid",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "ROTATION_NEW_FRESH_NONCE",
+      "message_id": "ROTATION_NEW_FRESH_SIGNED",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "fresh-nonce-existing-semantic-event",
+        "now": "2026-10-08T12:00:00.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-new"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-new-key-00000001"
+          ],
+          [
+            "Apacely-Signature",
+            "AGG0pchFHeZDnArGPTj_Me6lGcB2Lr9uYNOxkkgU7Qw"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "fresh nonce current proof reconciles same semantic event without new outbox",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "ADMISSION_DEADLINE_MINUS1",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "identical-accepted-D-2026-10-08T12:00:30.000Z",
+        "now": "2026-10-08T12:00:29.999Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "authenticated",
+        "http_status": 200,
+        "reason": "original D=N+30000; max(app,DB)=D-1",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "ADMISSION_DEADLINE_EQUAL",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "identical-accepted-D-2026-10-08T12:00:30.000Z",
+        "now": "2026-10-08T12:00:30.000Z"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "reject",
+        "http_status": 401,
+        "reason": "original D equality rejects and never renews",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    },
+    {
+      "id": "CRYPTO_FAILURE",
+      "message_id": "POSSTAGE",
+      "context": {
+        "environment": "staging",
+        "key_registry": "default",
+        "mapping": "active-exact",
+        "tenant": "active",
+        "replay": "unclaimed",
+        "now": "2026-10-08T12:00:00.000Z",
+        "crypto": "throws"
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://synthetic.invalid/v1/ingress/synthetic",
+        "header_lines": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "Apacely-Key-Id",
+            "public-stage-old"
+          ],
+          [
+            "Apacely-Source",
+            "public-source-001"
+          ],
+          [
+            "Apacely-Signed-At",
+            "2026-10-08T12:00:00.000Z"
+          ],
+          [
+            "Apacely-Nonce",
+            "public-nonce-0000000000000001"
+          ],
+          [
+            "Apacely-Signature",
+            "ifFKaBMDovtzfMTc1DHG_zHojSuDFv2-6ujKzJzOV-I"
+          ]
+        ],
+        "body_hex": "7b22736368656d615f76657273696f6e223a312c22736f757263655f6576656e745f6964223a227075626c69632d6576656e742d303031222c22736f757263655f6c6561645f6964223a227075626c69632d6c6561642d303031222c22736f757263655f73657175656e6365223a312c226f636375727265645f6174223a22323032362d30312d30315431323a30303a30302e3030305a222c226368616e6e656c223a226d6f636b222c22636f6e746163745f7265666572656e6365223a227075626c69632d636f6e746163742d303031222c2274657874223a2253796e74686574696320636166c3a9222c227175616c696669636174696f6e223a7b7d2c2268616e646f66665f726571756573746564223a66616c73657d"
+      },
+      "expected": {
+        "protocol_result": "internal",
+        "http_status": 500,
+        "reason": "injected trusted crypto failure must not fall back",
+        "evidence_status": "PROPOSED_NOT_RUNTIME_TESTED"
+      }
+    }
+  ],
+  "context_notes": {
+    "default": "one trusted registry in selected environment; stage-old/new overlap 300000ms; active exact synthetic mapping; no network",
+    "mapping_ids": "case labels describe synthetic future harness states, not existing DB records",
+    "crypto": "only fixture signatures computed; proposed parser/HTTP/mapping/replay outcomes not executed"
+  }
+}
