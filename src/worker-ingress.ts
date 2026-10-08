@@ -32,13 +32,15 @@ export class Ingress {
    replay:Object.freeze({claim:replay.claim.bind(replay),authorityBinding:replay.authorityBinding.bind(replay)}),now,log
   });
  }
- async handle(request:Request):Promise<Response>{
+ async handle(request:Request,context?:{waitUntil(promise:Promise<unknown>):void}):Promise<Response>{
  const request_id=crypto.randomUUID();let provider_category:IngressLog['provider_category']='unknown',replay_outcome:IngressLog['replay_outcome']='not_claimed';
  const reply=(status:number,code:SafeCode,event_id?:string,retryAfter?:number)=>{
  try{this.#dependencies.log({request_id,status,code,provider_category,replay_outcome,failure_category:code==='accepted'?'none':code});}catch{/* Diagnostics must not change durable acceptance or expose logger failures. */}
  return Response.json(event_id?{request_id,event_id}:{request_id,code},{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff',...(retryAfter?{'retry-after':String(retryAfter)}:{})}});
  };
  let operation:Deadline;try{operation=new Deadline(this.#options.deadlineMs??10000,this.#options.clock);}catch{return reply(500,'internal');}
+ // Observe expiry before any synchronous request cancellation or context registration failure.
+ void operation.expired.catch(()=>undefined);
  const abort=()=>operation.cancel();request.signal.addEventListener('abort',abort,{once:true});if(request.signal.aborted)abort();
  let releaseGlobal:(()=>void)|undefined,releaseSource:(()=>void)|undefined;
  const work=(async()=>{
@@ -78,7 +80,12 @@ export class Ingress {
  const outcome=await processor.process({environment:'development',source_binding:mapping.source_binding,operation:'ingest_mock_lead'},input,mapping,claim.admission);
  operation.check();return outcome.event.event_id;
  })().finally(()=>{releaseSource?.();releaseGlobal?.();});
- try {const event=await Promise.race([work,operation.expired]);operation.check();return reply(200,'accepted',event);}
+ // Observe late rejection and retain the actual pipeline (including permit release), not only its response race.
+ const settled=work.then(()=>undefined,()=>undefined);
+ try {
+ // Registration failures are internal composition errors, not deadline responses.
+ try{context?.waitUntil(settled);}catch{operation.cancel();return reply(500,'internal');}
+ const event=await Promise.race([work,operation.expired]);operation.check();return reply(200,'accepted',event);}
  catch(error){
  if(error instanceof DeadlineError)return reply(504,'deadline');
  if(error instanceof OverloadError)return reply(503,'overloaded');
