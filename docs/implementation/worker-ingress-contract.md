@@ -6,6 +6,10 @@ Separately authorized local durable replay implementation atop clean baseline `9
 
 All route, size, timestamp-window and response choices below are **synthetic local test policy**, not approved production security policy. Qualification remains `mock-qualification-v1`, not client eligibility or consent policy.
 
+### Current next stage — documentation only
+
+The local HTTP follow-up at the end of this document records completed independent re-review and parent verification; earlier PENDING/uncommitted statements are historical checkpoints, not the current review verdict. The next planning artifact is [Staging readiness](staging-readiness.md), based on `9a264f9ab5da4df5ce6450e938fee78ca8d57f62`. It specifies proposed isolated bindings, approval gates, migration/recovery, authentication/distributed admission and remote acceptance evidence. **Staging deployment remains NO-GO**: current source/schema enforce development only, no real verifier or deployable fetch composition exists, and remote qualification is NOT RUN. The minimal next implementation request is local true-staging environment isolation; this backlink grants no code, resource, secret, route or deployment authority.
+
 ## Trust boundary and lifecycle
 
 1. Generate an internal UUID request ID (ignore external correlation headers).
