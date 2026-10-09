@@ -1,3 +1,4 @@
+import type {IssuedObserver} from './distributed-admission.js';
 import {assertDatabaseEnvironment,environmentPredicate} from './environment.js';
 import {authorityHash,databaseNow,type ReplayAdmission} from './replay-ledger.js';
 import type {SourceAuthority} from './source-mappings.js';
@@ -35,9 +36,15 @@ export function normalizeFailure(error:unknown):unknown {
  if(messages.some(m=>/^D1_ERROR(?::|$)/.test(m))&&details.length&&details.every(m=>transientDetails.has(m)))return Object.assign(new Error('Transient D1 operation failure'),{code:'D1_TRANSIENT',cause:error});
  return error;
 }
+export async function issuedBatch(db:D1Binding,identity:object,statements:D1Statement[],observer?:IssuedObserver):Promise<unknown[]>{
+ const unit=observer?.issued(identity);let result:unknown[];
+ try{result=await db.batch(statements);}catch(error){unit?.rejected();throw error;}
+ unit?.resolved();return result;
+}
 export class D1Repository implements AcceptanceRepository {
  /** Pass the original D1Database binding: non-session operations always route to primary. */
  #identity:object;
+ operationObserverBinding():object{return this.#identity;}
  authorityBinding():object{return this.#identity;}
  replayBinding():object{return this.#identity;}
  #db:D1Binding;#clock:()=>string;#generator:()=>string;
@@ -75,10 +82,10 @@ export class D1Repository implements AcceptanceRepository {
   return reads[1].results;
  }
  #table(table:Table) {if(!businessTables.includes(table)) throw new SliceError('context','Invalid scoped table');}
- async #batch(statements:D1Statement[]):Promise<unknown[]> {
-  try{return await this.#db.batch(statements);}catch(error){throw normalizeFailure(error);}
+ async #batch(statements:D1Statement[],observer?:IssuedObserver):Promise<unknown[]> {
+  try{return await issuedBatch(this.#db,this.#identity,statements,observer);}catch(error){throw normalizeFailure(error);}
  }
- async accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T,target?:AcceptanceTarget,authority?:SourceAuthority,replay?:ReplayAdmission):Promise<T> {
+ async accept<T>(scope:Scope,work:(store:AcceptanceStore)=>T,target?:AcceptanceTarget,authority?:SourceAuthority,replay?:ReplayAdmission,observer?:IssuedObserver):Promise<T> {
   const captured=this.#capture(scope);
   const expected=authority?Object.freeze({...authority}):undefined;
   if(expected&&(expected.tenant_id!==captured.tenant_id||expected.environment!==captured.environment||expected.operation!=='ingest_mock_lead'||!target||expected.source_binding!==target.source_binding||!uuidV4.test(expected.id)||!Number.isSafeInteger(expected.version)||expected.version<1))throw new SliceError('context','Invalid acceptance authority');
@@ -100,7 +107,7 @@ export class D1Repository implements AcceptanceRepository {
     if(table==='conversations'||table==='qualification_state')return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND ${environmentPredicate(this.#environment)} AND lead_id=(SELECT id FROM leads WHERE tenant_id=? AND source_binding=? AND source_lead_id=?)${table==='conversations'?' AND source_binding=?':''}`).bind(captured.tenant_id,captured.tenant_id,source_binding,source_lead_id,...(table==='conversations'?[source_binding]:[]));
     return this.#db.prepare(`SELECT * FROM ${table} WHERE tenant_id=? AND 0`).bind(captured.tenant_id);
    })
-  ]) as {results:Row[]}[];
+  ],observer) as {results:Row[]}[];
   if(reads[0].results.length!==1) throw new SliceError('context','Tenant inactive at snapshot');
   if(expected&&reads[1].results[0]?.authorized!==1)throw new SliceError('context','Source authority unavailable at snapshot');
   if(admission&&reads[2].results[0]?.fresh!==1)throw new SliceError('expired','Replay admission expired at snapshot');
@@ -148,7 +155,7 @@ export class D1Repository implements AcceptanceRepository {
     this.#db.prepare(`INSERT INTO acceptance_assertions (active) VALUES (CASE WHEN EXISTS (SELECT 1 FROM tenants WHERE id=? AND lifecycle_status='active') AND ${environmentPredicate(this.#environment)} THEN 1 ELSE 0 END)`).bind(captured.tenant_id),
     this.#db.prepare('DELETE FROM acceptance_assertions')
    );
-   try {await this.#batch(statements);}
+   try {await this.#batch(statements,observer);}
    catch(error) {
     if(errorMessages(error).join('\n').includes('apacely_replay_fresh'))throw new SliceError('expired','Replay admission expired at commit');
     if(errorMessages(error).join('\n').includes('apacely_source_authority'))throw new SliceError('context','Source authority unavailable at commit');

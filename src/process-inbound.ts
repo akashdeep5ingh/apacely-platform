@@ -1,3 +1,4 @@
+import type {IssuedObserver} from './distributed-admission.js';
 import type {ReplayAdmission} from './replay-ledger.js';
 import type {SourceAuthority} from './source-mappings.js';
 import {fields,fingerprint,validateInput,POLICY,SliceError,trustedEnvironment,type Environment,type Context,type Scope,type Input} from './contracts.js';
@@ -25,7 +26,7 @@ export class Processor {
   this.maxRetries=options.maxRetries??3;
   if(!Number.isInteger(this.maxRetries)||this.maxRetries<0||this.maxRetries>3) throw new SliceError('validation','Retry budget must be 0..3');
  }
- async process(ctx:Context,raw:unknown,authority?:SourceAuthority,replay?:ReplayAdmission):Promise<Outcome> {
+ async process(ctx:Context,raw:unknown,authority?:SourceAuthority,replay?:ReplayAdmission,observer?:IssuedObserver):Promise<Outcome> {
   const capturedReplay=replay?Object.freeze({...replay}):undefined;
   if(capturedReplay&&(!authority||!this.repo.replayBinding))throw new SliceError('context','Replay-aware authority required');
   const capturedAuthority=authority?Object.freeze({...authority}):undefined;
@@ -34,7 +35,7 @@ export class Processor {
   const key=JSON.stringify([scope.environment,scope.tenant_id,source,input.source_lead_id]);
   const work=(this.queues.get(key)??Promise.resolve()).catch(()=>undefined).then(async()=>{
    for(let retries=0;;retries++) {
-    try {return await this.repo.accept(scope,store=>accept(this.repo,store,scope,source,input,this.options),{source_binding:source,source_event_id:input.source_event_id,source_lead_id:input.source_lead_id},capturedAuthority,capturedReplay);}
+    try {return await this.repo.accept(scope,store=>accept(this.repo,store,scope,source,input,this.options),{source_binding:source,source_event_id:input.source_event_id,source_lead_id:input.source_lead_id},capturedAuthority,capturedReplay,observer);}
     catch(error) {
      const code=(error as {code?:string})?.code;
      if(!['SQLITE_BUSY','SQLITE_BUSY_SNAPSHOT','SQLITE_LOCKED','LOCAL_VERSION_CONFLICT','D1_TRANSIENT'].includes(code??'')) throw error;

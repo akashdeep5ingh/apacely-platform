@@ -1,3 +1,4 @@
+import type {DistributedOptions} from './distributed-admission.js';
 import {sha256} from '@noble/hashes/sha256';
 import {bytesToHex} from '@noble/hashes/utils';
 /** Local synthetic policy. No platform binding or distributed guarantees. */
@@ -14,6 +15,7 @@ export class Deadline implements Operation {
   this.expired=new Promise((_,reject)=>{this.signal.addEventListener('abort',()=>reject(new DeadlineError()),{once:true});});
   this.#timer=setTimeout(()=>this.cancel(),ms);
  }
+ get end():number{return this.#end;}
  cancel():void{this.#controller.abort();}
  check():void{const now=this.#clock();if(!Number.isFinite(now)||now>=this.#end)this.cancel();if(this.signal.aborted)throw new DeadlineError();}
  close():void{clearTimeout(this.#timer);}
@@ -67,4 +69,4 @@ export function enforceRate(decision:RateDecision):void {
  if(!decision||typeof decision.allowed!=='boolean')throw new Error('Invalid local rate decision');
  if(!decision.allowed){if(!Number.isSafeInteger(decision.retryAfter)||decision.retryAfter<1||decision.retryAfter>60)throw new Error('Invalid local retry interval');throw new RateError(decision.retryAfter);}
 }
-export interface OperationalOptions {rates?:RatePolicy;deadlineMs?:number;clock?:()=>number;globalLimit?:number;sourceLimit?:number;maxSources?:number;admission?:LocalAdmission}
+export interface OperationalOptions {admissionMode?:'local'|'distributed';distributed?:DistributedOptions;rates?:RatePolicy;deadlineMs?:number;clock?:()=>number;globalLimit?:number;sourceLimit?:number;maxSources?:number;admission?:LocalAdmission}
