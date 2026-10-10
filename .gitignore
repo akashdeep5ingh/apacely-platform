@@ -3,3 +3,8 @@ dist/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+.wrangler/
+.env
+.env.*
+.dev.vars
+.dev.vars.*

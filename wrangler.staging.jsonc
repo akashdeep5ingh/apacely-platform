@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "apacely-disabled-sentinel",
+  "account_id": "00000000000000000000000000000000",
+  "main": "src/staging-worker.ts",
+  "compatibility_date": "2025-07-18",
+  "compatibility_flags": [],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "send_metrics": false,
+  "observability": {"enabled": false},
+  "vars": {
+    "APACELY_ENVIRONMENT": "staging",
+    "APACELY_OPERATION": "ingest_mock_lead",
+    "APACELY_INGRESS_ENABLED": "false",
+    "APACELY_EFFECTS_ENABLED": "false"
+  },
+  "d1_databases": [{"binding": "DB", "database_name": "apacely-staging", "database_id": "00000000-0000-4000-8000-000000000000", "migrations_dir": "migrations/staging"}],
+  "durable_objects": {"bindings": [{"name": "STAGING_ADMISSION", "class_name": "StagingAdmissionCoordinator"}]},
+  "migrations": [{"tag": "staging-admission-v1", "new_sqlite_classes": ["StagingAdmissionCoordinator"]}],
+  "env": {
+    "staging": {
+      "name": "apacely-ingress-staging",
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [],
+      "observability": {"enabled": false},
+      "vars": {
+        "APACELY_ENVIRONMENT": "staging",
+        "APACELY_OPERATION": "ingest_mock_lead",
+        "APACELY_INGRESS_ENABLED": "false",
+        "APACELY_EFFECTS_ENABLED": "false"
+      },
+      "d1_databases": [{"binding": "DB", "database_name": "apacely-staging", "database_id": "00000000-0000-4000-8000-000000000000", "migrations_dir": "migrations/staging"}],
+      "durable_objects": {"bindings": [{"name": "STAGING_ADMISSION", "class_name": "StagingAdmissionCoordinator"}]},
+      "migrations": [{"tag": "staging-admission-v1", "new_sqlite_classes": ["StagingAdmissionCoordinator"]}]
+    }
+  }
+}

@@ -237,19 +237,24 @@ async function httpAdmission(input:Partial<AdmissionPolicy>={},mode='normal'){
  return {fetch,signed,db,state:async()=>await (await fetch('/test/state')).json() as any,close:async()=>{await fetch('/test/unblock',{method:'POST'});await mf.dispose();}};
  }catch(e){await mf.dispose();throw e;}
 }
+// Status-only fixture responses still own a stream. Cancel immediately; do not
+// prebuffer, clone, suppress diagnostics or alter any application/state assertion.
+async function consumedStatus(response:{status:number;body:{cancel():Promise<void>}|null}) {
+ const status=response.status;if(response.body)await response.body.cancel();return status;
+}
 async function eventually(check:()=>Promise<boolean>){const end=Date.now()+5000;while(!await check()){assert.ok(Date.now()<end,'Bounded state observation expired');await new Promise(r=>setTimeout(r,10));}}
 test('DA08 DA12 actual HMAC HTTP timeout retains pending D1 capacity until original completion',async()=>{
  const h=await httpAdmission({},'held');try{
- const response=await h.fetch('/v1/ingress/synthetic',await h.signed());assert.equal(response.status,504);
- assert.equal((await h.state()).aggregateLive,1);assert.equal((await h.fetch('/test/held')).status,200);
+ const response=await h.fetch('/v1/ingress/synthetic',await h.signed());assert.equal(await consumedStatus(response),504);
+ assert.equal((await h.state()).aggregateLive,1);assert.equal(await consumedStatus(await h.fetch('/test/held')),200);
  const next=await h.fetch('/v1/ingress/synthetic',await h.signed('second'));assert.equal(next.status,503);assert.equal((await next.json() as {code:string}).code,'overloaded','Definitive capacity denial keeps existing safe overload envelope');assert.equal((await h.state()).aggregateLive,1);assert.equal((await h.state()).registry.length,1,'Definitive denials must not allocate cancellation seals');assert.equal((await h.state()).registry[0].state,'QUARANTINED');
  await h.fetch('/test/unblock',{method:'POST'});await eventually(async()=>(await h.state()).aggregateLive===0);
  assert.deepEqual((await h.db.prepare('SELECT (SELECT count(*) FROM events) events,(SELECT count(*) FROM action_outbox) actions,(SELECT count(*) FROM replay_ledger) nonces').all()).results,[{events:1,actions:1,nonces:1}]);
  }finally{await h.close();}
 });
 test('DA03 actual distributed HMAC HTTP rejects unauthorized identities without admission or writes',async()=>{
- const h=await httpAdmission();try{const bad=await h.signed();bad.headers['apacely-signature']='invalid';assert.equal((await h.fetch('/v1/ingress/synthetic',bad)).status,401);
- await h.db.prepare("UPDATE source_mappings SET status='revoked',version=version+1,revoked_at=updated_at,revoked_version=version+1").run();assert.equal((await h.fetch('/v1/ingress/synthetic',await h.signed())).status,403);assert.equal((await h.state()).registry.length,0);
+ const h=await httpAdmission();try{const bad=await h.signed();bad.headers['apacely-signature']='invalid';assert.equal(await consumedStatus(await h.fetch('/v1/ingress/synthetic',bad)),401);
+ await h.db.prepare("UPDATE source_mappings SET status='revoked',version=version+1,revoked_at=updated_at,revoked_version=version+1").run();assert.equal(await consumedStatus(await h.fetch('/v1/ingress/synthetic',await h.signed())),403);assert.equal((await h.state()).registry.length,0);
  assert.deepEqual((await h.db.prepare('SELECT (SELECT count(*) FROM events) events,(SELECT count(*) FROM action_outbox) actions,(SELECT count(*) FROM replay_ledger) nonces').all()).results,[{events:0,actions:0,nonces:0}]);}finally{await h.close();}
 });
 
@@ -313,7 +318,7 @@ test('DA11 post-commit response loss captures charged owner without treating fai
 test('DA11 corrupt startup bytes counters identities policy and registry never reset',async()=>{
  const h=await runtime();try{const handle=owned(await h.send(h.ticket(),'reserve')).handle,original=(await h.state()).state;
  const variants=[()=>'{',()=>canonicalFixture({...original,version:2}),()=>canonicalFixture({...original,aggregateLive:0}),()=>canonicalFixture({...original,nextFence:'1'}),()=>canonicalFixture({...original,registry:[...original.registry,...original.registry]}),()=>canonicalFixture({...original,policyDigest:'0'.repeat(64)}),()=>canonicalFixture({...original,tenants:[]}),()=>canonicalFixture({...original,sources:[{...original.sources[0],live:0}]}),()=>canonicalFixture({...original,extra:1})];
- for(const corrupt of variants){const raw=corrupt();await h.fetch('/test-only-corrupt',{method:'POST',body:raw});const response=await h.send(handle,'inspect');closedEqual(response.reply.result,{tag:'fault',code:'storage-corrupt'});assert.equal((await h.fetch('/test-only-state')).status,200);assert.equal(await (await h.fetch('/test-only-state')).text(),raw);await h.restart();closedEqual((await h.send(handle,'inspect')).reply.result,{tag:'fault',code:'storage-corrupt'});}
+ for(const corrupt of variants){const raw=corrupt();await h.fetch('/test-only-corrupt',{method:'POST',body:raw});const response=await h.send(handle,'inspect');closedEqual(response.reply.result,{tag:'fault',code:'storage-corrupt'});assert.equal(await consumedStatus(await h.fetch('/test-only-state')),200);assert.equal(await (await h.fetch('/test-only-state')).text(),raw);await h.restart();closedEqual((await h.send(handle,'inspect')).reply.result,{tag:'fault',code:'storage-corrupt'});}
  }finally{await h.close();}
 });
 
@@ -391,7 +396,7 @@ test('DA13 private maintenance rejects prototype-forged execution brands',async(
 });
 
 test('DA04 stable verified principal source budget survives signing-key rotation and mapping versions',async()=>{
- const h=await httpAdmission({aggregateRate:1,tenantRate:1,sourceRate:1});try{assert.equal((await h.fetch('/v1/ingress/synthetic',await h.signed())).status,200);const second=await h.fetch('/v1/ingress/synthetic',await h.signed('rotated','fixture-rotated'));assert.equal(second.status,429);assert.ok(Number(second.headers.get('retry-after'))>=1);const s=await h.state();assert.equal(s.aggregateArrivals,1);assert.equal(s.sources.length,1);assert.equal(s.sources[0].arrivals,1);assert.equal(s.registry.length,1);assert.equal((await h.db.prepare('SELECT count(*) n FROM replay_ledger').all()).results[0].n,1);
+ const h=await httpAdmission({aggregateRate:1,tenantRate:1,sourceRate:1});try{assert.equal(await consumedStatus(await h.fetch('/v1/ingress/synthetic',await h.signed())),200);const second=await h.fetch('/v1/ingress/synthetic',await h.signed('rotated','fixture-rotated'));assert.equal(await consumedStatus(second),429);assert.ok(Number(second.headers.get('retry-after'))>=1);const s=await h.state();assert.equal(s.aggregateArrivals,1);assert.equal(s.sources.length,1);assert.equal(s.sources[0].arrivals,1);assert.equal(s.registry.length,1);assert.equal((await h.db.prepare('SELECT count(*) n FROM replay_ledger').all()).results[0].n,1);
  const authority=s.registry[0].handle.context.authority;const one=createTicket(fixturePolicy,authority,Date.now()+30000),two=createTicket(fixturePolicy,{...authority,mappingVersion:authority.mappingVersion+1},one.requestDeadline);assert.equal(one.context.sourceKey,two.context.sourceKey);
  }finally{await h.close();}
 });
@@ -469,13 +474,13 @@ test('DA12 actual distributed HMAC caller transport abort is distinct from incom
 });
 
 test('DA12 actual distributed HMAC streamed-body timeout cannot reach verification or nonce',async()=>{
- const h=await httpAdmission({},'body-held');try{assert.equal((await h.fetch('/v1/ingress/synthetic',await h.signed())).status,504);await new Promise(r=>setTimeout(r,650));assert.equal((await h.state()).registry.length,0);assert.equal((await h.db.prepare('SELECT count(*) n FROM replay_ledger').first()).n,0);assert.equal((await h.db.prepare('SELECT count(*) n FROM events').first()).n,0);}finally{await h.close();}
+ const h=await httpAdmission({},'body-held');try{assert.equal(await consumedStatus(await h.fetch('/v1/ingress/synthetic',await h.signed())),504);await new Promise(r=>setTimeout(r,650));assert.equal((await h.state()).registry.length,0);assert.equal(await h.db.prepare('SELECT count(*) n FROM replay_ledger').first<number>('n'),0);assert.equal(await h.db.prepare('SELECT count(*) n FROM events').first<number>('n'),0);}finally{await h.close();}
 });
 test('DA12 actual distributed HMAC crypto timeout cannot resolve mapping or renew deadline',async()=>{
- const h=await httpAdmission({},'crypto-held');try{assert.equal((await h.fetch('/v1/ingress/synthetic',await h.signed())).status,504);assert.equal((await h.state()).registry.length,0);await new Promise(r=>setTimeout(r,650));assert.equal((await h.state()).registry.length,0);assert.equal((await h.db.prepare('SELECT count(*) n FROM replay_ledger').first()).n,0);assert.equal((await h.db.prepare('SELECT count(*) n FROM events').first()).n,0);}finally{await h.close();}
+ const h=await httpAdmission({},'crypto-held');try{assert.equal(await consumedStatus(await h.fetch('/v1/ingress/synthetic',await h.signed())),504);assert.equal((await h.state()).registry.length,0);await new Promise(r=>setTimeout(r,650));assert.equal((await h.state()).registry.length,0);assert.equal(await h.db.prepare('SELECT count(*) n FROM replay_ledger').first<number>('n'),0);assert.equal(await h.db.prepare('SELECT count(*) n FROM events').first<number>('n'),0);}finally{await h.close();}
 });
 test('DA12 actual distributed HMAC pending original claim retains quota and never launches acceptance',async()=>{
- const h=await httpAdmission({},'claim-held');try{assert.equal((await h.fetch('/v1/ingress/synthetic',await h.signed())).status,504);assert.equal((await h.state()).aggregateLive,1);assert.equal((await h.db.prepare('SELECT count(*) n FROM replay_ledger').first()).n,1);await eventually(async()=>(await h.state()).aggregateLive===0);assert.equal((await h.db.prepare('SELECT count(*) n FROM events').first()).n,0);assert.equal((await h.db.prepare('SELECT count(*) n FROM action_outbox').first()).n,0);}finally{await h.close();}
+ const h=await httpAdmission({},'claim-held');try{assert.equal(await consumedStatus(await h.fetch('/v1/ingress/synthetic',await h.signed())),504);assert.equal((await h.state()).aggregateLive,1);assert.equal(await h.db.prepare('SELECT count(*) n FROM replay_ledger').first<number>('n'),1);await eventually(async()=>(await h.state()).aggregateLive===0);assert.equal(await h.db.prepare('SELECT count(*) n FROM events').first<number>('n'),0);assert.equal(await h.db.prepare('SELECT count(*) n FROM action_outbox').first<number>('n'),0);}finally{await h.close();}
 });
 
 test('DA13 same SQLite directory and identity reboot retains active quarantine and permanent terminal owners',async()=>{

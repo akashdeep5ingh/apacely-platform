@@ -8,20 +8,28 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc && node -e \"require('node:fs').copyFileSync('src/schema.sql','dist/src/schema.sql')\"",
     "demo": "tsx src/cli.ts",
-    "test:sqlite": "tsx --test --import ./tests/network-guard.mjs tests/*.test.ts",
-    "test:d1": "tsx --test --import ./tests/d1/loopback-guard.mjs tests/d1/*.test.ts"
+    "test:sqlite": "tsx --test --test-concurrency=1 --import ./tests/network-guard.mjs tests/*.test.ts",
+    "test:d1": "tsx --test --test-concurrency=1 --import ./tests/d1/loopback-guard.mjs tests/d1/*.test.ts",
+    "test:staging-runtime": "APACELY_HTTP_EMULATOR_OWNER=parent-serial-approved MINIFLARE_ASSERT_BODIES_CONSUMED=true GOMAXPROCS=1 /root/apacely-toolchain/node-v22.23.3-linux-x64/bin/node --import tsx --import ./tests/d1/loopback-guard.mjs --test --test-concurrency=1 tests/staging-runtime/*.test.ts",
+    "staging:types": "/root/apacely-toolchain/node-v22.23.3-linux-x64/bin/node --import tsx scripts/staging-release.ts types --config wrangler.staging.jsonc --env staging",
+    "staging:dry-run": "/root/apacely-toolchain/node-v22.23.3-linux-x64/bin/node --import tsx scripts/staging-release.ts dry-run --config wrangler.staging.jsonc --env staging",
+    "staging:bootstrap-dry-run": "/root/apacely-toolchain/node-v22.23.3-linux-x64/bin/node --import tsx scripts/staging-release.ts dry-run --config wrangler.staging-bootstrap.jsonc --env staging",
+    "staging:migration-check": "node --import tsx scripts/staging-migration.ts check --config wrangler.staging.jsonc --env staging --mode wrangler-4.149.0-initial"
   },
   "dependencies": {
     "@noble/hashes": "1.8.0",
-    "better-sqlite3": "^11.10.0"
+    "better-sqlite3": "^11.10.0",
+    "jose": "6.2.12"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "4.20250718.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.19.0",
     "esbuild": "0.28.1",
     "miniflare": "^3.20250718.3",
     "tsx": "^4.20.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "wrangler": "4.149.0"
   },
   "overrides": {
     "undici": "^6.28.1",
