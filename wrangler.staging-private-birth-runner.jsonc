@@ -1,0 +1,14 @@
+{
+ "$schema":"./node_modules/wrangler/config-schema.json",
+ "name":"apacely-staging-private-birth-runner",
+ "account_id":"00000000000000000000000000000000",
+ "main":"src/baseline-private-birth-runner.ts",
+ "compatibility_date":"2025-07-18",
+ "compatibility_flags":[],
+ "workers_dev":false,
+ "preview_urls":false,
+ "routes":[],
+ "send_metrics":false,
+ "observability":{"enabled":false},
+ "durable_objects":{"bindings":[{"name":"STAGING_ADMISSION","class_name":"StagingAdmissionCoordinator","script_name":"apacely-ingress-staging"}]}
+}

@@ -1,10 +1,18 @@
-import { existsSync, lstatSync, readFileSync, mkdtempSync, readdirSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, mkdtempSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 
+import { assertQualificationWorkspace } from './qualification-release.js';
+
+const PRIVATE_CONFIG = 'wrangler.staging-private-birth-runner.jsonc';
+export function validatePrivateBirthConfig(value: unknown): void {
+  const expected = {$schema:'./node_modules/wrangler/config-schema.json',name:'apacely-staging-private-birth-runner',account_id:'00000000000000000000000000000000',main:'src/baseline-private-birth-runner.ts',compatibility_date:'2025-07-18',compatibility_flags:[],workers_dev:false,preview_urls:false,routes:[],send_metrics:false,observability:{enabled:false},durable_objects:{bindings:[{name:'STAGING_ADMISSION',class_name:'StagingAdmissionCoordinator',script_name:'apacely-ingress-staging'}]}};
+  if (!isDeepStrictEqual(value,expected)) throw new Error('Exact inert private caller config required');
+}
 const ENV = 'staging';
 const CONFIG = 'wrangler.staging.jsonc';
 const BOOTSTRAP_CONFIG = 'wrangler.staging-bootstrap.jsonc';
@@ -53,6 +61,15 @@ export function validateStagingConfig(value: unknown, artifact: 'sealed'|'bootst
   }
 }
 export function releasePlan(args: string[], ambient: NodeJS.ProcessEnv = process.env): {args: string[]; env: NodeJS.ProcessEnv} {
+  if (args[2] === PRIVATE_CONFIG) {
+    if (args.length !== 5 || args[0] !== 'dry-run' || args[1] !== '--config' || args[3] !== '--env' || args[4] !== ENV) throw new Error('Exact offline private caller dry-run required');
+    if (Object.keys(ambient).some(key => /^(?:CF_|CLOUDFLARE_|WRANGLER_|NODE_|DOTENV_|LD_|npm_config_.*(?:proxy|node|wrangler|token|config)|APACELY_|QUALIFICATION_|(?:HTTP|HTTPS|ALL|NO)_PROXY$)/i.test(key))) throw new Error('Credential or override environment forbidden');
+    assertQualificationWorkspace();
+    const file = resolve(ROOT,PRIVATE_CONFIG);
+    if (lstatSync(file).isSymbolicLink()) throw new Error('Config symlink forbidden');
+    validatePrivateBirthConfig(JSON.parse(readFileSync(file,'utf8')));
+    return {args:['deploy','--dry-run','--outdir','.wrangler/staging-private-birth-dist','--config',PRIVATE_CONFIG,'--experimental-provision=false','--experimental-auto-create=false'],env:{PATH:'/usr/bin:/bin',WRANGLER_SEND_METRICS:'false',CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV:'false',CLOUDFLARE_INCLUDE_PROCESS_ENV:'false'}};
+  }
   const bootstrap = args[2] === BOOTSTRAP_CONFIG;
   if (args.length !== 5 || args[1] !== '--config' || (!bootstrap && args[2] !== CONFIG) || args[3] !== '--env' || args[4] !== ENV || !Object.hasOwn(allowed,args[0]!) || (bootstrap && args[0] !== 'dry-run')) throw new Error('explicit fixed staging config and offline mode required');
   if (Object.keys(ambient).some(key => forbidden.test(key))) throw new Error('credential or override environment is forbidden');
@@ -65,8 +82,46 @@ export function releasePlan(args: string[], ambient: NodeJS.ProcessEnv = process
   return {args:[...command, '--env', ENV, '--config', config], env:{PATH:'/usr/bin:/bin', WRANGLER_SEND_METRICS:'false', CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV:'false', CLOUDFLARE_INCLUDE_PROCESS_ENV:'false'}};
 }
 
+type PrivateLauncher = (command:string,args:string[],options:import('node:child_process').SpawnSyncOptionsWithStringEncoding)=>{status:number|null;stdout?:string};
+// Import-only test seam; not a CLI, runtime or environment selector.
+export function runPrivateBirthPackaging(args:string[],ambient:NodeJS.ProcessEnv=process.env,launch:PrivateLauncher=(command,argv,options)=>spawnSync(command,argv,options)) {
+  if (args[2] !== PRIVATE_CONFIG) throw new Error('Private caller config required');
+  const plan=releasePlan(args,ambient);
+  const output=`.wrangler/staging-private-birth-dist/${randomUUID()}`;
+  if (spawnSync('/usr/bin/git',['check-ignore','--quiet','--',output],{cwd:ROOT,env:{PATH:'/usr/bin:/bin'},timeout:10000}).status!==0) throw new Error('Output must be Git ignored');
+  if (JSON.parse(readFileSync(resolve(ROOT,'node_modules/wrangler/package.json'),'utf8')).version!=='4.149.0') throw new Error('Pinned Wrangler required');
+  const home=mkdtempSync(resolve(tmpdir(),'apacely-private-birth-cli-'));
+  const env:NodeJS.ProcessEnv={...plan.env,HOME:home,XDG_CONFIG_HOME:home,MINIFLARE_ASSERT_BODIES_CONSUMED:'true',GOMAXPROCS:'1'};
+  try {
+    const node22='/root/apacely-toolchain/node-v22.23.3-linux-x64/bin/node';
+    const version=launch(node22,['--version'],{env,encoding:'utf8',timeout:10000});
+    if(version.status!==0||version.stdout?.trim()!=='v22.23.3') throw new Error('Pinned Node required');
+    mkdirSync(dirname(resolve(ROOT,output)),{recursive:true,mode:0o700});
+    mkdirSync(resolve(ROOT,output),{mode:0o700});
+    const argv=[...plan.args];argv[argv.indexOf('--outdir')+1]=output;
+    const result=launch(node22,['--import',resolve(ROOT,'tests/d1/loopback-guard.mjs'),resolve(ROOT,'node_modules/wrangler/bin/wrangler.js'),...argv],{cwd:ROOT,env,encoding:'utf8',stdio:'inherit',timeout:120000});
+    const files:{path:string;sha256:string}[]=[];
+    if(result.status===0){
+      assertQualificationWorkspace();
+      const names=readdirSync(resolve(ROOT,output)).sort();
+      if(!names.some(name=>name.endsWith('.js'))) throw new Error('Missing useful generated bundle');
+      for(const name of names){
+        const path=resolve(ROOT,output,name);
+        if(!lstatSync(path).isFile()) throw new Error('Generated artifact must be regular');
+        const bytes=readFileSync(path);if(!bytes.length) throw new Error('Empty generated artifact');
+        files.push({path:`${output}/${name}`,sha256:createHash('sha256').update(bytes).digest('hex')});
+      }
+    }
+    return {status:result.status??1,output,files};
+  } finally {rmSync(home,{recursive:true,force:true});}
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
+    if (process.argv[4] === PRIVATE_CONFIG) {
+      const result=runPrivateBirthPackaging(process.argv.slice(2));
+      console.log(JSON.stringify(result));process.exitCode=result.status;
+    } else {
     const plan = releasePlan(process.argv.slice(2));
     const home = mkdtempSync(resolve(tmpdir(),'apacely-offline-cli-'));
     plan.env.HOME = home; plan.env.XDG_CONFIG_HOME = home;
@@ -100,5 +155,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     }
     const result = spawnSync(node22,[...cli,...plan.args],{cwd:ROOT,env:plan.env,stdio:'inherit',timeout:120000});
     process.exitCode = result.status ?? 1;
+    }
   } catch { console.error('Offline staging command refused or failed; no remote mode is available.'); process.exitCode = 1; }
 }
