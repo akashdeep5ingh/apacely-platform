@@ -1,6 +1,7 @@
 import {sha256} from '@noble/hashes/sha256';
 import {bytesToHex} from '@noble/hashes/utils';
 import type {Environment} from './contracts.js';
+import {captureStorageCapability,STORAGE_BUDGET_SEAL_KEY,type StorageCapability,type CapturedStorageCapability} from './qualification/storage-capability-core.js';
 import {DeadlineError,type Deadline} from './ingress-operations.js';
 const DOMAIN='distributed-admission-v1' as const,KEY='distributed-admission/state/v1',MAX_TIME=8640000000000000,MAX_FENCE=18446744073709551615n;
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -128,8 +129,11 @@ function validateState(input:unknown,policy:AdmissionPolicy):PersistentState{
  for(const b of state.tenants)valid(b.live===(tenantLive.get(b.tenant)??0)&&b.live<=policy.tenantCap&&b.arrivals<=policy.tenantRate&&b.arrivals===(tenantArrivals.get(b.tenant)??0));
  valid(state.aggregateArrivals===state.tenants.reduce((sum,b)=>sum+b.arrivals,0)&&state.aggregateArrivals===state.sources.reduce((sum,b)=>sum+b.arrivals,0));return state;
 }
-function decodeState(raw:unknown,policy:AdmissionPolicy):PersistentState{valid(typeof raw==='string'&&raw.length<=65536);const state=validateState(JSON.parse(raw),policy);valid(canonical(state)===raw);return state;}
-function encodeState(value:PersistentState,policy:AdmissionPolicy):string {const raw=canonical(validateState(value,policy));valid(raw.length<=65536);return raw;}
+function decodeState(raw:unknown,policy:AdmissionPolicy,maxStateChars=65536):PersistentState{valid(typeof raw==='string'&&raw.length<=maxStateChars);const state=validateState(JSON.parse(raw),policy);valid(canonical(state)===raw);return state;}
+function encodeState(value:PersistentState,policy:AdmissionPolicy,maxStateChars=65536):string {const raw=canonical(validateState(value,policy));valid(raw.length<=maxStateChars);return raw;}
+function storageConfiguration(policy:AdmissionPolicy,input:unknown):CapturedStorageCapability|undefined {
+ if(input===undefined)return undefined;const cap=captureStorageCapability(input);valid(cap.policyDigest===hash(canonical(policy)));return cap;
+}
 /** Conservative encoded upper bound, including every existing owner's longest lifecycle and metadata widths. */
 function lifecycleSize(state:PersistentState):number {
  const maximum=10240000;
@@ -138,9 +142,9 @@ function lifecycleSize(state:PersistentState):number {
  registry:state.registry.map(r=>({...r,state:'QUARANTINED',reservedAt:MAX_TIME,reservationExpiresAt:MAX_TIME,startedAt:MAX_TIME,diagnosticExpiresAt:MAX_TIME,terminalAt:MAX_TIME,terminalKind:'all-issued-terminal'}))}).length;
 }
 /** Explicit fresh local harness bootstrap, never invoked by request handling. */
-export async function bootstrapAdmission(storage:AdmissionStorage,input:AdmissionPolicy,now:number):Promise<void>{
- const policy=capturePolicy(input);time(now);
- await storage.transaction(async tx=>{valid(await tx.get(KEY)===undefined);const state:PersistentState={version:1,policy,policyDigest:hash(canonical(policy)),nextFence:'1',clockHighWater:now,windowStartedAt:now,aggregateLive:0,aggregateArrivals:0,tenants:[],sources:[],registry:[]};await tx.put(KEY,encodeState(state,policy));});
+export async function bootstrapAdmission(storage:AdmissionStorage,input:AdmissionPolicy,now:number,capability?:StorageCapability):Promise<void>{
+ const policy=capturePolicy(input),cap=storageConfiguration(policy,capability);time(now);
+ await storage.transaction(async tx=>{valid(await tx.get(KEY)===undefined&&await tx.get(STORAGE_BUDGET_SEAL_KEY)===undefined);const state:PersistentState={version:1,policy,policyDigest:hash(canonical(policy)),nextFence:'1',clockHighWater:now,windowStartedAt:now,aggregateLive:0,aggregateArrivals:0,tenants:[],sources:[],registry:[]};await tx.put(KEY,encodeState(state,policy,cap?.maxStateChars));if(cap)await tx.put(STORAGE_BUDGET_SEAL_KEY,cap.seal);});
 }
 async function body(message:Request|Response):Promise<string>{
  valid(message.headers.get('content-type')==='application/json'&&!message.headers.has('content-encoding'));const declared=message.headers.get('content-length');if(declared!==null)valid(/^(0|[1-9][0-9]*)$/.test(declared)&&Number(declared)<=8192);
@@ -226,14 +230,14 @@ export function captureAdmission(input:DistributedOptions):CapturedAdmission {
 }
 
 export class AdmissionCoordinator {
- readonly #storage:AdmissionStorage;readonly #policy:Readonly<AdmissionPolicy>;readonly #clock:()=>number;
- constructor(storage:AdmissionStorage,policy:AdmissionPolicy,clock:()=>number=Date.now){this.#storage=Object.freeze({get:storage.get.bind(storage),put:storage.put.bind(storage),transaction:storage.transaction.bind(storage)});this.#policy=capturePolicy(policy);this.#clock=clock;}
+ readonly #storage:AdmissionStorage;readonly #policy:Readonly<AdmissionPolicy>;readonly #clock:()=>number;readonly #cap:CapturedStorageCapability|undefined;readonly #maxStateChars:number;
+ constructor(storage:AdmissionStorage,policy:AdmissionPolicy,clock:()=>number=Date.now,capability?:StorageCapability){this.#policy=capturePolicy(policy);this.#cap=storageConfiguration(this.#policy,capability);this.#maxStateChars=this.#cap?.maxStateChars??65536;this.#storage=Object.freeze({get:storage.get.bind(storage),put:storage.put.bind(storage),transaction:storage.transaction.bind(storage)});this.#clock=clock;}
  async fetch(message:Request):Promise<Response>{
   let r:AdmissionRequest;
   try{const url=new URL(message.url);valid(message.method==='POST'&&url.origin==='https://admission.internal'&&!url.search&&!url.hash&&!url.username&&!url.password);r=decodeMessage(await body(message),'request');valid(url.pathname==='/v1/'+r.operation);}catch{return new Response('{"result":{"code":"invalid-message","tag":"fault"},"version":1}',{status:400,headers:{'content-type':'application/json'}});}
   let result:AdmissionResult;
   try{result=await this.#storage.transaction(async tx=>{
-   let state:PersistentState;try{state=decodeState(await tx.get(KEY),this.#policy);}catch{return {tag:'fault',code:'storage-corrupt'};}
+   let state:PersistentState;try{valid(await tx.get(STORAGE_BUDGET_SEAL_KEY)===this.#cap?.seal);state=decodeState(await tx.get(KEY),this.#policy,this.#maxStateChars);}catch{return {tag:'fault',code:'storage-corrupt'};}
    const original=canonical(state),h=r.ticket,c=h.context,a=c.authority,p=this.#policy;
    if(a.environment!==p.environment||c.domain!==p.domain||c.policyEpoch!==p.epoch||c.policyDigest!==state.policyDigest||h.reservationTtlMs!==p.reservationTtlMs||h.diagnosticTtlMs!==p.diagnosticTtlMs)return denied('policy');
    let existing=state.registry.find(rec=>rec.handle.attempt===h.attempt);if(existing&&!matches(existing.handle,h))return denied('ownership');
@@ -256,7 +260,7 @@ export class AdmissionCoordinator {
      else if(BigInt(state.nextFence)>=MAX_FENCE)outcome=denied('fence-exhausted');else {
       const beforeAllocation=canonical(state);
       if(!tenant)state.tenants.push({tenant:a.tenant,live:0,arrivals:0});if(!source)state.sources.push({sourceKey:c.sourceKey,tenant:a.tenant,live:0,arrivals:0});
-      existing={handle:{...h,fence:state.nextFence},state:'RESERVED',reservedAt:now,reservationExpiresAt:Math.min(h.requestDeadline,now+p.reservationTtlMs),startedAt:null,diagnosticExpiresAt:null,terminalAt:null,terminalKind:null};state.nextFence=(BigInt(state.nextFence)+1n).toString();state.registry.push(existing);state.aggregateArrivals++;state.tenants.find(b=>b.tenant===a.tenant)!.arrivals++;state.sources.find(b=>b.sourceKey===c.sourceKey)!.arrivals++;updateCounts();if(lifecycleSize(state)>65536){state=decodeState(beforeAllocation,p);existing=undefined;outcome=denied('state-size');}else outcome={tag:'record',record:existing};
+      existing={handle:{...h,fence:state.nextFence},state:'RESERVED',reservedAt:now,reservationExpiresAt:Math.min(h.requestDeadline,now+p.reservationTtlMs),startedAt:null,diagnosticExpiresAt:null,terminalAt:null,terminalKind:null};state.nextFence=(BigInt(state.nextFence)+1n).toString();state.registry.push(existing);state.aggregateArrivals++;state.tenants.find(b=>b.tenant===a.tenant)!.arrivals++;state.sources.find(b=>b.sourceKey===c.sourceKey)!.arrivals++;updateCounts();if(lifecycleSize(state)>this.#maxStateChars){state=decodeState(beforeAllocation,p,this.#maxStateChars);existing=undefined;outcome=denied('state-size');}else outcome={tag:'record',record:existing};
      }
     }
    }else if(r.operation==='start'){
@@ -278,7 +282,7 @@ export class AdmissionCoordinator {
       if(!tenant)state.tenants.push({tenant:a.tenant,live:0,arrivals:0});if(!source)state.sources.push({sourceKey:c.sourceKey,tenant:a.tenant,live:0,arrivals:0});
       existing={handle:{...h,fence:state.nextFence},state:'CANCELLED',reservedAt:now,reservationExpiresAt:Math.min(h.requestDeadline,now+p.reservationTtlMs),startedAt:null,diagnosticExpiresAt:null,terminalAt:now,terminalKind:'cancelled'};
       state.nextFence=(BigInt(state.nextFence)+1n).toString();state.registry.push(existing);
-      if(lifecycleSize(state)>65536){state=decodeState(beforeAllocation,p);existing=undefined;outcome=denied('state-size');}else outcome={tag:'record',record:existing};
+      if(lifecycleSize(state)>this.#maxStateChars){state=decodeState(beforeAllocation,p,this.#maxStateChars);existing=undefined;outcome=denied('state-size');}else outcome={tag:'record',record:existing};
      }
     }
    }else if(r.operation==='quarantine'){
@@ -292,7 +296,7 @@ export class AdmissionCoordinator {
     }
    }else outcome=denied('not-authorized');
    state.tenants.sort((a,b)=>a.tenant<b.tenant?-1:1);state.sources.sort((a,b)=>a.sourceKey<b.sourceKey?-1:1);state.registry.sort((a,b)=>a.handle.attempt<b.handle.attempt?-1:1);
-   let encoded:string;try{encoded=encodeState(state,p);}catch{return {tag:'fault',code:'internal'};}if(encoded!==original)await tx.put(KEY,encoded);return outcome;
+   let encoded:string;try{encoded=encodeState(state,p,this.#maxStateChars);}catch{return {tag:'fault',code:'internal'};}if(encoded!==original)await tx.put(KEY,encoded);return outcome;
   });}catch{result={tag:'fault',code:'unavailable'};}
   const response:AdmissionReply={version:1,operation:r.operation,ticket:r.ticket,result};return new Response(encodeMessage(response),{status:status(result),headers:{'content-type':'application/json'}});
  }

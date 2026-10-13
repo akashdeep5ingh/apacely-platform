@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "account_id": "00000000000000000000000000000000",
+  "compatibility_date": "2025-07-18",
+  "compatibility_flags": [],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "send_metrics": false,
+  "observability": {
+    "enabled": false
+  },
+  "triggers": {
+    "crons": []
+  },
+  "name": "apacely-qualification-capacity16-source4-disabled",
+  "main": "src/qualification/artifacts/capacity16-source4-bootstrap.ts",
+  "vars": {
+    "APACELY_ENVIRONMENT": "staging",
+    "APACELY_OPERATION": "ingest_mock_lead",
+    "APACELY_INGRESS_ENABLED": "false",
+    "APACELY_EFFECTS_ENABLED": "false",
+    "STAGING_ACCESS_ISSUER": "REPLACE_WITH_APPROVED_ACCESS_ISSUER",
+    "STAGING_ACCESS_AUDIENCE": "REPLACE_WITH_APPROVED_ACCESS_AUDIENCE"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "apacely-qualification-capacity16-source4",
+      "database_id": "00000000-0000-4000-8000-000000000000",
+      "migrations_dir": "migrations/staging"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "STAGING_ADMISSION",
+        "class_name": "StagingAdmissionCoordinator"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "qualification-initial-birth-v1",
+      "new_sqlite_classes": [
+        "StagingAdmissionCoordinator"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "account_id": "00000000000000000000000000000000",
+  "compatibility_date": "2025-07-18",
+  "compatibility_flags": [],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "send_metrics": false,
+  "observability": {
+    "enabled": false
+  },
+  "triggers": {
+    "crons": []
+  },
+  "name": "apacely-qualification-source-rate100-runner-disabled",
+  "main": "src/qualification/initialization-runner-worker.ts",
+  "services": [
+    {
+      "binding": "INITIALIZER",
+      "service": "apacely-qualification-source-rate100-initializer-disabled"
+    }
+  ]
+}

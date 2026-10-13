@@ -5,6 +5,7 @@ import {Miniflare} from 'miniflare';
 import {webcrypto} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {environmentStatements} from '../../scripts/environment-schema.js';
+import {consumedStatus} from './response-consumption.js';
 const vectors=JSON.parse(readFileSync(new URL('../fixtures/synthetic-hmac-v1.json',import.meta.url),'utf8'));
 async function http(environment:'development'|'staging',lifecycle:'normal'|'revoked'|'expired'='normal'){
  const time=new Date().toISOString();const records=vectors.keys.filter((k:{environment:string})=>k.environment===environment).map((k:Record<string,string>)=>({...k,not_before:new Date(Date.parse(time)-60000).toISOString(),not_after:new Date(Date.parse(time)+(k.key_id.endsWith('old')?240000:3600000)).toISOString()}));
@@ -52,7 +53,7 @@ for(const [label,mutate,status] of [
  const h=await http('staging');try{const input=await h.signed();mutate(input);const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',input);assert.equal(response.status,status);assert.deepEqual(Object.keys(await response.json() as object).sort(),['code','request_id']);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
 });
 test('same key ID and material signed in other environment cannot authorize HTTP',async()=>{
- const h=await http('staging');try{const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('crossenv','development'));assert.equal(response.status,401);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
+ const h=await http('staging');try{const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('crossenv','development'));assert.equal(await consumedStatus(response),401);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
 });
 
 // Audit of inherited authentication behavior, not invented test-first history.
@@ -62,23 +63,23 @@ for(const [label,change,status] of [
  ['identical duplicate proof',(x:any)=>{x.headers.append('Apacely-Nonce',x.headers.get('apacely-nonce'));},401],
  ['unknown namespace header',(x:any)=>{x.headers.set('apacely-principal','forged');},401]
 ] as const)test('audited actual HTTP rejects '+label,async()=>{
- const h=await http('staging');try{const input=await h.signed();change(input);const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',input);assert.equal(response.status,status);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
+ const h=await http('staging');try{const input=await h.signed();change(input);const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',input);assert.equal(await consumedStatus(response),status);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
 });
 for(const path of ['/v1/ingress/other','/v1/ingress/synthetic/'])test('audited actual HTTP rejects path '+path,async()=>{
- const h=await http('staging');try{const response=await h.local.dispatchFetch('http://localhost'+path,await h.signed());assert.equal(response.status,path==='/v1/ingress/other'?401:404);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
+ const h=await http('staging');try{const response=await h.local.dispatchFetch('http://localhost'+path,await h.signed());assert.equal(await consumedStatus(response),path==='/v1/ingress/other'?401:404);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
 });
 for(const lifecycle of ['revoked','expired'] as const)test('audited actual HTTP rejects '+lifecycle+' key',async()=>{
- const h=await http('staging',lifecycle);try{const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed());assert.equal(response.status,401);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
+ const h=await http('staging',lifecycle);try{const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed());assert.equal(await consumedStatus(response),401);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
 });
 for(const [label,delta] of [['stale',-300000],['future',60000]] as const)test('audited actual HTTP rejects signed '+label,async()=>{
- const h=await http('staging');try{const signedAt=new Date(Date.parse(h.time)+delta).toISOString();const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('time-nonce','staging',h.records[0].key_id,signedAt));assert.equal(response.status,401);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
+ const h=await http('staging');try{const signedAt=new Date(Date.parse(h.time)+delta).toISOString();const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('time-nonce','staging',h.records[0].key_id,signedAt));assert.equal(await consumedStatus(response),401);assert.deepEqual(await h.counts(),[{events:0,actions:0,nonces:0}]);}finally{await h.dispose();}
 });
 test('audited actual HTTP rotation conflicts old nonce and replays event with new nonce',async()=>{
- const h=await http('staging');try{const first=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed());const oldEvent=await first.json() as {event_id:string};assert.equal(first.status,200);const conflict=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('public-http-nonce','staging',h.records[1].key_id));assert.equal(conflict.status,409);const fresh=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('fresh-http-nonce','staging',h.records[1].key_id));assert.equal(fresh.status,200);assert.equal((await fresh.json() as {event_id:string}).event_id,oldEvent.event_id);assert.deepEqual(await h.counts(),[{events:1,actions:1,nonces:2}]);}finally{await h.dispose();}
+ const h=await http('staging');try{const first=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed());const oldEvent=await first.json() as {event_id:string};assert.equal(first.status,200);const conflict=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('public-http-nonce','staging',h.records[1].key_id));assert.equal(await consumedStatus(conflict),409);const fresh=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',await h.signed('fresh-http-nonce','staging',h.records[1].key_id));assert.equal(fresh.status,200);assert.equal((await fresh.json() as {event_id:string}).event_id,oldEvent.event_id);assert.deepEqual(await h.counts(),[{events:1,actions:1,nonces:2}]);}finally{await h.dispose();}
 });
 test('audited actual HTTP empty query is normalized before observable ingress',async()=>{
- const h=await http('staging');try{const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic?',await h.signed());assert.equal(response.status,200);assert.deepEqual(await h.counts(),[{events:1,actions:1,nonces:1}]);}finally{await h.dispose();}
+ const h=await http('staging');try{const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic?',await h.signed());assert.equal(await consumedStatus(response),200);assert.deepEqual(await h.counts(),[{events:1,actions:1,nonces:1}]);}finally{await h.dispose();}
 });
 test('audited Fetch strips outer OWS before verification (documented limitation)',async()=>{
- const h=await http('staging');try{const input=await h.signed();input.headers.set('apacely-nonce',' \t'+input.headers.get('apacely-nonce')+'\t ');assert.equal(input.headers.get('apacely-nonce'),'public-http-nonce');const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',input);assert.equal(response.status,200);assert.deepEqual(await h.counts(),[{events:1,actions:1,nonces:1}]);}finally{await h.dispose();}
+ const h=await http('staging');try{const input=await h.signed();input.headers.set('apacely-nonce',' \t'+input.headers.get('apacely-nonce')+'\t ');assert.equal(input.headers.get('apacely-nonce'),'public-http-nonce');const response=await h.local.dispatchFetch('http://localhost/v1/ingress/synthetic',input);assert.equal(await consumedStatus(response),200);assert.deepEqual(await h.counts(),[{events:1,actions:1,nonces:1}]);}finally{await h.dispose();}
 });

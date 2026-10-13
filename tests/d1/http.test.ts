@@ -9,6 +9,7 @@ import {fixture} from '../../src/fixture.js';
 import {handleWorkerRequest} from '../../src/worker-http.js';
 import type {Dependencies} from '../../src/worker-ingress.js';
 import {LocalAdmission,type OperationalOptions} from '../../src/ingress-operations.js';
+import {consumedStatus} from './response-consumption.js';
 
 function adapterProbe(){
  const calls={verify:0,claim:0,business:0};const binding={};
@@ -192,8 +193,8 @@ test('HTTP identical and conflicting replay preserve original deadline and singl
   const first=await h.send();assert.equal(first.status,200);const body=await json(first);
   const before=await h.db.prepare('SELECT * FROM replay_ledger').first();
   const same=await h.send();assert.equal(same.status,200);assert.equal((await json(same)).event_id,body.event_id);
-  assert.equal((await h.send(JSON.stringify({...fixture,text:'conflicting'}))).status,409);
-  assert.equal((await h.send(JSON.stringify({...fixture,text:'conflicting'}),{'x-synthetic-nonce':'fresh'})).status,409);
+  assert.equal(await consumedStatus(await h.send(JSON.stringify({...fixture,text:'conflicting'}))),409);
+  assert.equal(await consumedStatus(await h.send(JSON.stringify({...fixture,text:'conflicting'}),{'x-synthetic-nonce':'fresh'})),409);
   assert.deepEqual(await h.db.prepare('SELECT * FROM replay_ledger ORDER BY rowid LIMIT 1').first(),before);
   assert.equal(await h.count('events'),1);assert.equal(await h.count('action_outbox'),1);
   const other=await h.send(undefined,{authorization:'Bearer synthetic-two'});assert.equal(other.status,200);await other.text();
@@ -203,24 +204,24 @@ test('HTTP identical and conflicting replay preserve original deadline and singl
 
 test('HTTP concurrent independent requests reconcile one atomic outcome',async()=>{
  const h=await runtime();try{
-  const responses=await Promise.all([h.send(),h.send()]);assert.deepEqual(responses.map(r=>r.status),[200,200]);
-  const bodies=await Promise.all(responses.map(r=>json(r)));assert.equal(bodies[0].event_id,bodies[1].event_id);
+  const responses=await Promise.all([h.send(),h.send()].map(async r=>{const response=await r;return {status:response.status,body:await json(response)};}));assert.deepEqual(responses.map(r=>r.status),[200,200]);
+  const bodies=responses.map(r=>r.body);assert.equal(bodies[0].event_id,bodies[1].event_id);
   assert.equal(await h.count('events'),1);assert.equal(await h.count('replay_ledger'),1);assert.equal(await h.count('action_outbox'),1);
  }finally{await h.mf.dispose();}
 });
 
 test('HTTP authenticated rate denial cannot be selected by spoofed source headers',async()=>{
  const h=await runtime('rate');try{
-  assert.equal((await h.send(undefined,{authorization:'invalid','x-source':'source-one'})).status,401);
-  assert.equal((await h.send()).status,200);
-  const denied=await h.send(undefined,{'x-source':'unlimited','x-tenant-id':h.two.id,'x-synthetic-nonce':'fresh'});assert.equal(denied.status,429);assert.match(denied.headers.get('retry-after')!,/^(?:[1-9]|[1-5][0-9]|60)$/);
+  assert.equal(await consumedStatus(await h.send(undefined,{authorization:'invalid','x-source':'source-one'})),401);
+  assert.equal(await consumedStatus(await h.send()),200);
+  const denied=await h.send(undefined,{'x-source':'unlimited','x-tenant-id':h.two.id,'x-synthetic-nonce':'fresh'});assert.equal(await consumedStatus(denied),429);assert.match(denied.headers.get('retry-after')!,/^(?:[1-9]|[1-5][0-9]|60)$/);
   assert.equal(await h.count('events'),1);assert.equal(await h.count('replay_ledger'),1);
  }finally{await h.mf.dispose();}
 });
 
 test('HTTP permits survive early timeout and late rejection then release at actual settlement',async()=>{
  const h=await runtime('slow-verifier');try{
-  const responses=await Promise.all([h.send(),h.send()]);assert.deepEqual(responses.map(r=>r.status),[504,504]);await Promise.all(responses.map(r=>r.text()));
+  const statuses=await Promise.all([h.send(),h.send()].map(async r=>consumedStatus(await r)));assert.deepEqual(statuses,[504,504]);
   const overloaded=await h.send();assert.equal(overloaded.status,503);assert.equal((await json(overloaded)).code,'overloaded');
   await new Promise(r=>setTimeout(r,650));
   const after=await h.send('{}',{},'GET');assert.equal(after.status,405);await after.text();
@@ -230,7 +231,7 @@ test('HTTP permits survive early timeout and late rejection then release at actu
 
 test('HTTP timed out issued D1 work can commit late and explicit replay recovers without renewal',async()=>{
  const h=await runtime('late-write');try{
-  const pending=h.send();await observed(h,'write-issued');const response=await pending;assert.equal(response.status,504);await response.text();
+  const pending=h.send().then(consumedStatus);await observed(h,'write-issued');assert.equal(await pending,504);
   const claim=await h.db.prepare('SELECT * FROM replay_ledger').first();assert.equal(await h.count('events'),0);
   await observed(h,'write-settled');assert.equal(await h.count('action_outbox'),1);
   const recovered=await h.send();assert.equal(recovered.status,200);await recovered.text();
@@ -240,11 +241,11 @@ test('HTTP timed out issued D1 work can commit late and explicit replay recovers
 
 test('HTTP revocation before delayed issued write preserves atomic denial after timeout',async()=>{
  const h=await runtime('revoke-write');try{
-  const pending=h.send();await observed(h,'write-issued');
+  const pending=h.send().then(consumedStatus);await observed(h,'write-issued');
   await h.store.revoke({tenant_id:h.one.id,environment:'development'},h.mappings[0].id,1);
-  const response=await pending;assert.equal(response.status,504);await response.text();await observed(h,'write-settled');
+  assert.equal(await pending,504);await observed(h,'write-settled');
   for(const table of ['leads','conversations','events','messages','qualification_state','action_outbox'])assert.equal(await h.count(table),0);
-  assert.equal(await h.count('replay_ledger'),1);assert.equal((await h.send()).status,403);
+  assert.equal(await h.count('replay_ledger'),1);assert.equal(await consumedStatus(await h.send()),403);
  }finally{await h.mf.dispose();}
 });
 
@@ -272,7 +273,7 @@ test('HTTP caller transport abort is ambiguous and does not assert D1 rollback',
   const controller=new AbortController();
   const pending=h.mf.dispatchFetch('https://local.invalid/v1/ingress/synthetic',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer synthetic-one'},body:JSON.stringify(fixture),signal:controller.signal});
   // Observe rejection immediately: no unhandled transport rejection while inspecting D1.
-  const outcome=pending.then(r=>({response:r,error:null}),error=>({response:null,error}));
+  const outcome=pending.then(async r=>({status:await consumedStatus(r),error:null}),error=>({status:null,error}));
   await observed(h,'write-issued');controller.abort();const result=await outcome;
   assert.ok(result.error instanceof Error);assert.equal(result.error.name,'AbortError');
   await observed(h,'write-settled');assert.equal(await h.count('events'),1);assert.equal(await h.count('action_outbox'),1);

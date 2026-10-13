@@ -1,0 +1,86 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "account_id": "00000000000000000000000000000000",
+  "compatibility_date": "2025-07-18",
+  "compatibility_flags": [],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "send_metrics": false,
+  "observability": {
+    "enabled": false
+  },
+  "triggers": {
+    "crons": []
+  },
+  "name": "apacely-qualification-source-rate100-disabled",
+  "main": "src/qualification/artifacts/source-rate100-sealed.ts",
+  "secrets": {
+    "required": [
+      "QUALIFICATION_SIGNING_KEY_R100_001_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_001_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_002_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_002_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_003_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_003_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_004_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_004_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_005_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_005_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_006_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_006_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_007_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_007_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_008_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_008_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_009_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_009_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_010_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_010_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_011_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_011_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_012_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_012_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_013_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_013_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_014_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_014_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_015_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_015_NEXT",
+      "QUALIFICATION_SIGNING_KEY_R100_016_CURRENT",
+      "QUALIFICATION_SIGNING_KEY_R100_016_NEXT"
+    ]
+  },
+  "vars": {
+    "APACELY_ENVIRONMENT": "staging",
+    "APACELY_OPERATION": "ingest_mock_lead",
+    "APACELY_INGRESS_ENABLED": "false",
+    "APACELY_EFFECTS_ENABLED": "false",
+    "STAGING_ACCESS_ISSUER": "REPLACE_WITH_APPROVED_ACCESS_ISSUER",
+    "STAGING_ACCESS_AUDIENCE": "REPLACE_WITH_APPROVED_ACCESS_AUDIENCE"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "apacely-qualification-source-rate100",
+      "database_id": "00000000-0000-4000-8000-000000000000",
+      "migrations_dir": "migrations/staging"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "STAGING_ADMISSION",
+        "class_name": "StagingAdmissionCoordinator"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "qualification-initial-birth-v1",
+      "new_sqlite_classes": [
+        "StagingAdmissionCoordinator"
+      ]
+    }
+  ]
+}

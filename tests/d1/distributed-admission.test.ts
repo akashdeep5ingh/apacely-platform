@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {existsSync} from 'node:fs';
 import {mkdtemp,cp,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {build} from 'esbuild';
 import {Miniflare,Headers as RuntimeHeaders} from 'miniflare';
 
@@ -18,7 +20,7 @@ test('DA01 real SQLite DO canonical fetch atomic admission persists across reboo
  }
  export default {async fetch(request,env){const stub=env.ADMISSION.get(env.ADMISSION.idFromName('distributed-admission-v1'));return stub.fetch(request);}};
  `},bundle:true,write:false,format:'esm',platform:'browser',target:'es2022'});
- const persistence=await mkdtemp('/tmp/distributed-admission-implementation/da01-');
+ const persistence=await mkdtemp(join(tmpdir(),'apacely-distributed-admission-da01-'));
  const options={modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2025-07-18',compatibilityFlags:[],durableObjects:{ADMISSION:{className:'Admission',useSQLite:true}},durableObjectsPersist:persistence,host:'127.0.0.1',cf:false,outboundService:()=>{throw Error('External access forbidden');}};
  const {createTicket,encodeMessage,decodeMessage}=await import('../../src/distributed-admission.js');
  const policy={version:1 as const,environment:'development' as const,domain:'distributed-admission-v1' as const,epoch:'10000000-0000-4000-8000-000000000001',aggregateCap:2,tenantCap:2,sourceCap:2,tenantKeyCap:2,sourceKeyCap:2,recordCap:32,aggregateRate:100,tenantRate:100,sourceRate:100,windowMs:10000,reservationTtlMs:30000,diagnosticTtlMs:30000,controlAttempts:2};
@@ -75,7 +77,7 @@ async function runtime(input:Partial<AdmissionPolicy>={},afterResponse?:(respons
  }
  export default {fetch(request,env){return env.ADMISSION.get(env.ADMISSION.idFromName('distributed-admission-v1')).fetch(request);}};
  `},bundle:true,write:false,format:'esm',platform:'browser',target:'es2022'});
- const persistence=await mkdtemp('/tmp/distributed-admission-implementation/runtime-');
+ const persistence=await mkdtemp(join(tmpdir(),'apacely-distributed-admission-runtime-'));
  const options={modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2025-07-18',compatibilityFlags:[],durableObjects:{ADMISSION:{className:'Admission',useSQLite:true}},durableObjectsPersist:persistence,host:'127.0.0.1',cf:false,outboundService:()=>{throw Error('External access forbidden');}};
  let mf=new Miniflare(options);
  // Test-only diagnostics: never exported by application code. Preserve the original error;
@@ -202,7 +204,7 @@ test('DA11 explicit distributed composition requires capability and original obs
 
 import {webcrypto} from 'node:crypto';
 const hmacVectors=JSON.parse(readFileSync(new URL('../fixtures/synthetic-hmac-v1.json',import.meta.url),'utf8'));
-async function httpAdmission(input:Partial<AdmissionPolicy>={},mode='normal'){
+async function httpAdmission(input:Partial<AdmissionPolicy>={},mode='normal',onHeld?:()=>void){
  const policy={...fixturePolicy,aggregateCap:1,diagnosticTtlMs:1,...input},time=new Date().toISOString(),record={...hmacVectors.keys.find((k:{environment:string})=>k.environment==='development'),not_before:new Date(Date.parse(time)-60000).toISOString(),not_after:new Date(Date.parse(time)+3600000).toISOString()};
  const rotated={...record,key_id:'fixture-rotated',key_hex:hmacVectors.keys.find((k:{key_hex:string})=>k.key_hex!==record.key_hex).key_hex};record.not_after=new Date(Date.parse(time)+240000).toISOString();
  const bundle=await build({stdin:{resolveDir:process.cwd(),contents:`
@@ -220,15 +222,17 @@ async function httpAdmission(input:Partial<AdmissionPolicy>={},mode='normal'){
  if(path==='/test/held')return Response.json({held});if(path==='/test/signal')return Response.json({aborts});request.signal.addEventListener('abort',()=>aborts++,{once:true});
  const now=()=>new Date().toISOString();let count=0;
  // Fault injector is test-only; all work below invokes real original-primary D1.
- const db=mode==='normal'?env.DB:{prepare:env.DB.prepare.bind(env.DB),batch:async statements=>{const result=await env.DB.batch(statements);count++;if(count===(mode==='claim-held'?1:3)&&['held','claim-held'].includes(mode)){held=true;await new Promise(r=>setTimeout(r,mode==='held'?3000:500));}if(count===3&&mode==='lost')throw Error('D1_ERROR: Network connection lost.');return result;}};
+ const db=mode==='normal'?env.DB:{prepare:env.DB.prepare.bind(env.DB),batch:async statements=>{const result=await env.DB.batch(statements);count++;if(count===(mode==='claim-held'?1:3)&&['held','claim-held'].includes(mode)){held=true;if(env.HELD_READY)await env.HELD_READY.fetch('http://held-ready.internal/');await new Promise(r=>setTimeout(r,mode==='held'?3000:500));}if(count===3&&mode==='lost')throw Error('D1_ERROR: Network connection lost.');return result;}};
  const originalVerifier=await SyntheticHmacVerifier.create('development',[record,rotated].map(k=>({...k,bytes:Uint8Array.from(k.key_hex.match(/../g),x=>parseInt(x,16))})),now);
  const verifier=mode==='crypto-held'?{protocol:originalVerifier.protocol,verify:async input=>{held=true;await new Promise(r=>setTimeout(r,500));return originalVerifier.verify(input);}}:originalVerifier;
  if(mode==='body-held'){const original=request;request=new Request(original,{body:new ReadableStream({async start(controller){held=true;await new Promise(r=>setTimeout(r,500));try{controller.enqueue(new Uint8Array(await original.arrayBuffer()));controller.close();}catch{}}})});}
  return handleConfiguredWorkerRequest(request,{APACELY_ENVIRONMENT:'development',APACELY_OPERATION:'ingest_mock_lead',DB:db},{repo:new D1Repository(db,now),mappings:new D1SourceMappingStore(db,now),replay:new D1ReplayLedger(db,now),verifier,now,log:()=>{}},ctx,{admissionMode:'distributed',distributed:{policy,namespace:env.ADMISSION,database:db},deadlineMs:['held','claim-held','crypto-held','body-held'].includes(mode)?150:10000});
  }};`},bundle:true,write:false,format:'esm',platform:'browser',target:'es2022',metafile:true});
  assert.ok(Object.keys(bundle.metafile!.inputs).every(p=>!/(node:|better-sqlite3)/.test(p)));
- const persistence=await mkdtemp('/tmp/distributed-admission-implementation/http-');
- const mf=new Miniflare({modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2025-07-18',compatibilityFlags:[],d1Databases:['DB'],durableObjects:{ADMISSION:{className:'Admission',useSQLite:true}},durableObjectsPersist:persistence,host:'127.0.0.1',cf:false,outboundService:()=>{throw Error('External access forbidden');}});
+ const persistence=await mkdtemp(join(tmpdir(),'apacely-distributed-admission-http-'));
+ // Miniflare 3 function service bindings invoke the host over its private loopback
+ // bridge. Notify at the original held batch, not via competing host polling RPCs.
+ const mf=new Miniflare({modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2025-07-18',compatibilityFlags:[],d1Databases:['DB'],durableObjects:{ADMISSION:{className:'Admission',useSQLite:true}},durableObjectsPersist:persistence,serviceBindings:onHeld?{HELD_READY:()=>{onHeld();return new Response(null,{status:204});}}:{},host:'127.0.0.1',cf:false,outboundService:()=>{throw Error('External access forbidden');}});
  try{const db=await mf.getD1Database('DB');await db.exec(readFileSync(new URL('../../src/schema.sql',import.meta.url),'utf8').replace(/--[^\n]*/g,'').replaceAll('\n',' '));const tenant='f0000000-0000-4000-8000-000000000001',mapping='f0000000-0000-4000-8000-000000000002';
  await db.prepare("INSERT INTO tenants VALUES (?,?,'active',?)").bind(tenant,'Synthetic distributed HTTP',time).run();await db.prepare("INSERT INTO source_mappings VALUES (?,1,'synthetic','public-source-001','public-principal-001',?,'public-binding-001','development','ingest_mock_lead','active',?,?,NULL,NULL)").bind(mapping,tenant,time,time).run();
  const fetch=(path:string,init?:Parameters<Miniflare['dispatchFetch']>[1])=>mf.dispatchFetch('http://localhost'+path,init);
@@ -470,7 +474,16 @@ test('DA03 inactive verified tenant cannot consume distributed source or tenant 
  `));
 
 test('DA12 actual distributed HMAC caller transport abort is distinct from incoming signal and all-work proof',async()=>{
- const h=await httpAdmission({},'held');try{const controller=new AbortController(),pending=h.fetch('/v1/ingress/synthetic',{...await h.signed(),signal:controller.signal}),outcome=pending.then(response=>({response,error:null}),error=>({response:null,error}));await eventually(async()=>(await (await h.fetch('/test/held')).json() as {held:boolean}).held);assert.equal((await h.state()).aggregateLive,1);controller.abort();const result=await outcome;assert.ok(result.error instanceof Error);assert.equal(result.error.name,'AbortError');await eventually(async()=>(await h.state()).aggregateLive===0);assert.deepEqual(await (await h.fetch('/test/signal')).json(),{aborts:0},'Pinned transport does not propagate an incoming Request.signal event');assert.equal((await h.db.prepare('SELECT count(*) n FROM events').all()).results[0].n,1);assert.equal((await h.db.prepare('SELECT count(*) n FROM action_outbox').all()).results[0].n,1);}finally{await h.close();}
+ const controller=new AbortController();let start=0,settled=false,heldCalls=0,abortedWhilePending=false;
+ const mark=(event:string,details:Record<string,unknown>={})=>console.error('DA12_TRACE',JSON.stringify({event,ms:performance.now()-start,...details}));
+ const h=await httpAdmission({},'held',()=>{heldCalls++;abortedWhilePending=!settled;mark('held-observed',{settled});mark('abort-called');controller.abort();mark('signal-state',{aborted:controller.signal.aborted});});try{
+ const signed=await h.signed();start=performance.now();
+ mark('request-issued',{aborted:controller.signal.aborted});
+ const pending=h.fetch('/v1/ingress/synthetic',{...signed,signal:controller.signal}),outcome=pending.then(async response=>{settled=true;mark('pending-reply',{status:response.status,aborted:controller.signal.aborted});return {status:await consumedStatus(response),error:null};}).catch(error=>{settled=true;mark('pending-rejected',{name:error.name,aborted:controller.signal.aborted});return {status:null,error};});
+ const result=await outcome;assert.equal(heldCalls,1);assert.equal(abortedWhilePending,true,'Held callback must abort while caller transport is pending');assert.equal(controller.signal.aborted,true);assert.ok(result.error instanceof Error,'Expected caller cancellation; actual returned status '+result.status);assert.equal(result.error.name,'AbortError');
+ const charged=await h.state();mark('quota',{aggregateLive:charged.aggregateLive,states:charged.registry.map((r:any)=>r.state)});assert.equal(charged.aggregateLive,1);
+ await eventually(async()=>(await h.state()).aggregateLive===0);assert.deepEqual(await (await h.fetch('/test/signal')).json(),{aborts:0},'Pinned transport does not propagate an incoming Request.signal event');assert.equal((await h.db.prepare('SELECT count(*) n FROM events').all()).results[0].n,1);assert.equal((await h.db.prepare('SELECT count(*) n FROM action_outbox').all()).results[0].n,1);const terminal=await h.state();assert.equal(terminal.registry.length,1);assert.equal(terminal.registry[0].state,'RELEASED');assert.equal(terminal.registry[0].terminalKind,'all-issued-terminal');mark('all-work-terminal',{aggregateLive:terminal.aggregateLive,terminalKind:terminal.registry[0].terminalKind});
+ }finally{await h.close();}
 });
 
 test('DA12 actual distributed HMAC streamed-body timeout cannot reach verification or nonce',async()=>{

@@ -4,6 +4,7 @@ import {build} from 'esbuild';
 import {Miniflare} from 'miniflare';
 import {environmentStatements} from '../../scripts/environment-schema.js';
 import {fixture} from '../../src/fixture.js';
+import {consumedStatus} from './response-consumption.js';
 
 async function http(options:{environment?:'development'|'staging';config?:Record<string,string|readonly string[]>;db?:'DB'|'DEV'|'EMPTY'|'UNMARKED'|'MISSING';identity?:'DB'|'OTHER';proofEnvironment?:string}={}){
  const environment=options.environment??'staging',binding=options.db??'DB',identity=options.identity??binding;
@@ -50,11 +51,11 @@ test('actual configured HTTP accepts staging despite forged headers and provider
 });
 
 test('actual configured development HTTP accepts only explicitly selected development',async()=>{
- const h=await http({environment:'development',proofEnvironment:'staging'});try{assert.equal((await h.request()).status,200);assert.equal((await h.db.prepare('SELECT environment FROM action_outbox').all()).results[0].environment,'development');}finally{await h.dispose();}
+ const h=await http({environment:'development',proofEnvironment:'staging'});try{assert.equal(await consumedStatus(await h.request()),200);assert.equal((await h.db.prepare('SELECT environment FROM action_outbox').all()).results[0].environment,'development');}finally{await h.dispose();}
 });
 
 test('actual configured HTTP rejects conflicting unknown application environment setting',async()=>{
- const h=await http({config:{APACELY_ENVIRONMENT:'staging',APACELY_OPERATION:'ingest_mock_lead',environment:'development'}});try{assert.equal((await h.request()).status,500);assert.deepEqual(await h.snapshot(h.db),[{events:0,nonces:0,actions:0}]);}finally{await h.dispose();}
+ const h=await http({config:{APACELY_ENVIRONMENT:'staging',APACELY_OPERATION:'ingest_mock_lead',environment:'development'}});try{assert.equal(await consumedStatus(await h.request()),500);assert.deepEqual(await h.snapshot(h.db),[{events:0,nonces:0,actions:0}]);}finally{await h.dispose();}
 });
 
 for(const [label,config] of [
@@ -68,15 +69,15 @@ for(const [label,config] of [
 });
 
 for(const db of ['DEV','EMPTY','UNMARKED'] as const)test('actual staging HTTP refuses '+db+' physical database without provisioning or foreign writes',async()=>{
- const h=await http({db});try{assert.equal((await h.request()).status,db==='DEV'?403:500);assert.deepEqual(await h.snapshot(),[{events:0,nonces:0,actions:0}]);assert.deepEqual(await h.snapshot(h.unmarked),[{events:0,nonces:0,actions:0}]);const empty=await h.local.getD1Database('EMPTY');assert.deepEqual((await empty.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'").all()).results,[]);}finally{await h.dispose();}
+ const h=await http({db});try{assert.equal(await consumedStatus(await h.request()),db==='DEV'?403:500);assert.deepEqual(await h.snapshot(),[{events:0,nonces:0,actions:0}]);assert.deepEqual(await h.snapshot(h.unmarked),[{events:0,nonces:0,actions:0}]);const empty=await h.local.getD1Database('EMPTY');assert.deepEqual((await empty.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%'").all()).results,[]);}finally{await h.dispose();}
 });
 
 test('actual HTTP rejects alternate original D1 identity even with identical staging markers and tenant IDs',async()=>{
- const h=await http({identity:'OTHER'});try{assert.equal((await h.request()).status,500);assert.deepEqual(await h.snapshot(h.other),[{events:0,nonces:0,actions:0}]);assert.deepEqual(await h.snapshot(h.db),[{events:0,nonces:0,actions:0}]);}finally{await h.dispose();}
+ const h=await http({identity:'OTHER'});try{assert.equal(await consumedStatus(await h.request()),500);assert.deepEqual(await h.snapshot(h.other),[{events:0,nonces:0,actions:0}]);assert.deepEqual(await h.snapshot(h.db),[{events:0,nonces:0,actions:0}]);}finally{await h.dispose();}
 });
 
 test('actual staging HTTP rejects body and query environment overrides with zero nonce or business writes',async()=>{
- const h=await http();try{assert.equal((await h.request({...fixture,environment:'development'})).status,400);assert.equal((await h.request(fixture,'http://localhost/v1/ingress/synthetic?environment=development')).status,404);assert.deepEqual(await h.snapshot(h.db),[{events:0,nonces:0,actions:0}]);}finally{await h.dispose();}
+ const h=await http();try{assert.equal(await consumedStatus(await h.request({...fixture,environment:'development'})),400);assert.equal(await consumedStatus(await h.request(fixture,'http://localhost/v1/ingress/synthetic?environment=development')),404);assert.deepEqual(await h.snapshot(h.db),[{events:0,nonces:0,actions:0}]);}finally{await h.dispose();}
 });
 
 test('actual HTTP rejects missing application D1 binding before verifier and leaves valid database untouched',async()=>{

@@ -6,7 +6,8 @@ import {SyntheticHmacVerifier,type HmacKeyRecord} from './synthetic-hmac.js';
 import {createAccessVerifier} from './staging-access.js';
 import {STAGING_POLICY} from './staging-policy.js';
 import type {AdmissionNamespace} from './distributed-admission.js';
-import type {VerificationInput} from './worker-ingress.js';
+import {capturePolicy,type AdmissionPolicy} from './distributed-admission.js';
+import type {Dependencies,VerificationInput} from './worker-ingress.js';
 
 function reply(status:number,code:string):Response{return Response.json({code},{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});}
 function own(bindings:object,key:string):unknown {
@@ -43,7 +44,28 @@ function material(value:unknown):Uint8Array{
 /** Closed staging release boundary; no storage, crypto, Access, keys or body work while disabled.
  * Access and HMAC initialization run only inside Ingress.verify's existing retained deadline.
  * Transport claims never become source authority. Original primary D1 identity is preserved. */
+export interface CapturedSigningKey {readonly record:Readonly<Omit<HmacKeyRecord,'bytes'>>;readonly secret:string}
+type KeyCapture=(bindings:object)=>readonly CapturedSigningKey[];
+function captureBaselineKeys(bindings:object):readonly CapturedSigningKey[]{
+ const keys=registry(own(bindings,'STAGING_HMAC_KEY_REGISTRY'));
+ const current=own(bindings,'STAGING_SIGNING_KEY_CURRENT');
+ const hasNext=Object.hasOwn(bindings,'STAGING_SIGNING_KEY_NEXT'),expectsNext=keys.some(k=>k.slot==='next');
+ if(hasNext!==expectsNext)throw Error('Incomplete rotation');
+ const next=hasNext?own(bindings,'STAGING_SIGNING_KEY_NEXT'):undefined;
+ if(typeof current!=='string'||!/^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/.test(current)||expectsNext&&(typeof next!=='string'||!/^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/.test(next)))throw Error('Invalid secret encoding');
+ return Object.freeze(keys.map(({slot,...record})=>Object.freeze({record:Object.freeze(record),secret:(slot==='current'?current:next) as string})));
+}
+/** Trusted import-only composition seam. No request/binding-selected profile or fault controls. */
+export type LazyVerifierCapture=(bindings:object,signal:AbortSignal,now:()=>string)=>()=>Promise<Dependencies['verifier']>;
+export function createStagingRuntime(captureKeys:KeyCapture|null,policy:AdmissionPolicy,captureVerifier?:LazyVerifierCapture){
+ const captured=capturePolicy(policy);
+ if(captured.environment!=='staging'||(typeof captureKeys!=='function'&&typeof captureVerifier!=='function'))throw Error('Invalid staging composition');
+ return (request:Request,bindings:object,context:RequestLifetime)=>handleCapturedStagingRequest(request,bindings,context,captureKeys,captured,captureVerifier);
+}
 export async function handleStagingRequest(request:Request,bindings:object,context:RequestLifetime):Promise<Response>{
+ return handleCapturedStagingRequest(request,bindings,context,captureBaselineKeys,STAGING_POLICY);
+}
+async function handleCapturedStagingRequest(request:Request,bindings:object,context:RequestLifetime,captureKeys:KeyCapture|null,policy:AdmissionPolicy,captureVerifier?:LazyVerifierCapture):Promise<Response>{
  try{
   if(!bindings||![Object.prototype,null].includes(Object.getPrototypeOf(bindings)))throw Error('Invalid staging bindings');
   const environment=own(bindings,'APACELY_ENVIRONMENT'),operation=own(bindings,'APACELY_OPERATION'),enabled=own(bindings,'APACELY_INGRESS_ENABLED'),effects=own(bindings,'APACELY_EFFECTS_ENABLED');
@@ -54,26 +76,23 @@ export async function handleStagingRequest(request:Request,bindings:object,conte
   const issuer=own(bindings,'STAGING_ACCESS_ISSUER'),audience=own(bindings,'STAGING_ACCESS_AUDIENCE');
   const match=typeof issuer==='string'&&/^https:\/\/([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)\.cloudflareaccess\.com$/.exec(issuer);
   if(!match||/^(?:team|placeholder|example|changeme|replace-me)$/.test(match[1])||typeof audience!=='string'||!/^[a-f0-9]{64}$/.test(audience)||/^(?:0{64}|f{64})$/.test(audience))throw Error('Invalid Access configuration');
-  const keys=registry(own(bindings,'STAGING_HMAC_KEY_REGISTRY'));
-  const current=own(bindings,'STAGING_SIGNING_KEY_CURRENT');
-  const hasNext=Object.hasOwn(bindings,'STAGING_SIGNING_KEY_NEXT'),expectsNext=keys.some(k=>k.slot==='next');
-  if(hasNext!==expectsNext)throw Error('Incomplete rotation');
-  const next=hasNext?own(bindings,'STAGING_SIGNING_KEY_NEXT'):undefined;
   // Snapshot string secret slots once; decoding/import belongs to the retained lazy verifier.
-  if(typeof current!=='string'||!/^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/.test(current)||expectsNext&&(typeof next!=='string'||!/^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/.test(next)))throw Error('Invalid secret encoding');
+  const keys=captureKeys?captureKeys(bindings):[];
   const now=()=>new Date().toISOString();
   const verifier=Object.freeze({protocol:'apacely-synthetic-ingress-hmac-v1' as const,async verify(input:VerificationInput){
    if(input.signal?.aborted)return null;
+   const qualified=captureVerifier?.(bindings,input.signal!,now);
    const access=createAccessVerifier({issuer:issuer as string,audience});
    if(!await access.verify(input.headers,input.signal)||input.signal?.aborted)return null;
+   if(qualified){const hmac=await qualified();if(input.signal?.aborted)return null;return await hmac.verify(input);}
    const records:HmacKeyRecord[]=[];
    try{
-    for(const descriptor of keys){const {slot,...record}=descriptor;records.push({...record,bytes:material(slot==='current'?current:next)});}
+    for(const key of keys)records.push({...key.record,bytes:material(key.secret)});
     const hmac=await SyntheticHmacVerifier.create('staging',records,now);
     if(input.signal?.aborted)return null;
     return await hmac.verify(input);
    }finally{for(const record of records)record.bytes.fill(0);}
   }});
-  return await handleConfiguredWorkerRequest(request,{APACELY_ENVIRONMENT:'staging',APACELY_OPERATION:'ingest_mock_lead',DB},{repo:new D1Repository(DB,now,undefined,'staging'),mappings:new D1SourceMappingStore(DB,now,'staging'),replay:new D1ReplayLedger(DB,now,3,'staging'),verifier,now,log:()=>{}},context,{admissionMode:'distributed',distributed:{policy:STAGING_POLICY,namespace,database:DB}});
+  return await handleConfiguredWorkerRequest(request,{APACELY_ENVIRONMENT:'staging',APACELY_OPERATION:'ingest_mock_lead',DB},{repo:new D1Repository(DB,now,undefined,'staging'),mappings:new D1SourceMappingStore(DB,now,'staging'),replay:new D1ReplayLedger(DB,now,3,'staging'),verifier,now,log:()=>{}},context,{admissionMode:'distributed',distributed:{policy,namespace,database:DB}});
  }catch{return reply(500,'internal');}
 }

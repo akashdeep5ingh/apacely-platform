@@ -1,4 +1,5 @@
-import {AdmissionCoordinator,bootstrapAdmission,createTicket,encodeMessage,type AdmissionStorage,type AdmissionTransaction} from './distributed-admission.js';
+import {captureStorageCapability,STORAGE_BUDGET_SEAL_KEY,type StorageCapability} from './qualification/storage-capability-core.js';
+import {AdmissionCoordinator,bootstrapAdmission,createTicket,encodeMessage,capturePolicy,type AdmissionPolicy,type AdmissionStorage,type AdmissionTransaction} from './distributed-admission.js';
 import {STAGING_POLICY} from './staging-policy.js';
 /** Pure storage boundary; platform inheritance lives only in the release entrypoints. */
 export interface CoordinatorTransaction extends AdmissionTransaction {
@@ -11,9 +12,9 @@ export interface CoordinatorStorage extends AdmissionStorage {
 }
 const STATE='distributed-admission/state/v1',BIRTH='distributed-admission/birth/v1';
 const authority={environment:'staging' as const,tenant:'20000000-0000-4000-8000-000000000001',provider:'synthetic',principal:'storage-validation',source:'storage-validation',mappingId:'30000000-0000-4000-8000-000000000001',mappingVersion:1,sourceBinding:'storage-validation',operation:'ingest_mock_lead' as const};
-function marker():string {
- const digest=createTicket(STAGING_POLICY,authority,0).context.policyDigest;
- return JSON.stringify({version:1,environment:'staging',domain:STAGING_POLICY.domain,epoch:STAGING_POLICY.epoch,policyDigest:digest});
+function marker(policy:AdmissionPolicy):string {
+ const digest=createTicket(policy,authority,0).context.policyDigest;
+ return JSON.stringify({version:1,environment:'staging',domain:policy.domain,epoch:policy.epoch,policyDigest:digest});
 }
 function fail():never{throw new Error('Invalid sealed admission storage');}
 function schemaGuard(storage:CoordinatorStorage):void {
@@ -25,26 +26,30 @@ export function admissionStorage(storage:AdmissionStorage):AdmissionStorage {
  return Object.freeze({get:storage.get.bind(storage),put:storage.put.bind(storage),transaction:<T>(callback:(tx:AdmissionTransaction)=>Promise<T>)=>storage.transaction(tx=>callback(Object.freeze({get:tx.get.bind(tx),put:tx.put.bind(tx)})))});
 }
 /** No writes, reseeding or clock advancement; reuse the complete canonical core decoder. */
-export async function validateSealedAdmission(storage:CoordinatorStorage):Promise<void>{
+export async function validateSealedAdmission(storage:CoordinatorStorage,input:AdmissionPolicy=STAGING_POLICY,capability?:StorageCapability):Promise<void>{
+ const policy=capturePolicy(input),cap=capability===undefined?undefined:captureStorageCapability(capability);
+ if(cap&&cap.policyDigest!==createTicket(policy,authority,0).context.policyDigest)fail();
  schemaGuard(storage);
- const entries=await storage.list({limit:3});
- if(entries.size!==2||!entries.has(BIRTH)||!entries.has(STATE)||entries.get(BIRTH)!==marker())fail();
+ const entries=await storage.list({limit:cap?4:3});
+ if(entries.size!==(cap?3:2)||!entries.has(BIRTH)||!entries.has(STATE)||entries.get(BIRTH)!==marker(policy)||entries.get(STORAGE_BUDGET_SEAL_KEY)!==cap?.seal)fail();
  const raw=entries.get(STATE);
- const readonly:AdmissionStorage={get:async key=>key===STATE?raw:undefined,put:async()=>{},transaction:async callback=>callback({get:async key=>key===STATE?raw:undefined,put:async()=>{}})};
- const core=new AdmissionCoordinator(readonly,STAGING_POLICY,()=>NaN);
- const ticket=createTicket(STAGING_POLICY,authority,0);
+ const readonly:AdmissionStorage={get:async key=>key===STATE?raw:key===STORAGE_BUDGET_SEAL_KEY?cap?.seal:undefined,put:async()=>{},transaction:async callback=>callback({get:async key=>key===STATE?raw:key===STORAGE_BUDGET_SEAL_KEY?cap?.seal:undefined,put:async()=>{}})};
+ const core=new AdmissionCoordinator(readonly,policy,()=>NaN,capability);
+ const ticket=createTicket(policy,authority,0);
  const response=await core.fetch(new Request('https://admission.internal/v1/inspect',{method:'POST',headers:{'content-type':'application/json'},body:encodeMessage({version:1,operation:'inspect',ticket,payload:{}})}));
  const reply=await response.json() as {result?:{tag?:string}};
  if(response.status!==200||reply.result?.tag!=='absent')fail();
 }
 /** ONLY the separate trusted first-birth artifact imports this capability.
  * Empty storage is a guard, not proof of never-used storage: operator must prove a fresh namespace. */
-export async function initializeFreshAdmission(storage:CoordinatorStorage,now:number):Promise<void>{
+export async function initializeFreshAdmission(storage:CoordinatorStorage,now:number,input:AdmissionPolicy=STAGING_POLICY,capability?:StorageCapability):Promise<void>{
+ const policy=capturePolicy(input),cap=capability===undefined?undefined:captureStorageCapability(capability);
+ if(cap&&cap.policyDigest!==createTicket(policy,authority,0).context.policyDigest)fail();
  schemaGuard(storage);
  await storage.transaction(async tx=>{
   if((await tx.list({limit:1})).size!==0)fail();
   const facade:AdmissionStorage={get:tx.get.bind(tx),put:tx.put.bind(tx),transaction:async callback=>callback({get:tx.get.bind(tx),put:tx.put.bind(tx)})};
-  await tx.put(BIRTH,marker());
-  await bootstrapAdmission(facade,STAGING_POLICY,now);
+  await tx.put(BIRTH,marker(policy));
+  await bootstrapAdmission(facade,policy,now,capability);
  });
 }
